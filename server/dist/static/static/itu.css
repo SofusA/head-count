@@ -1,0 +1,146 @@
+
+    :root {
+        --main-color: RGB(252, 118, 52);
+        font-family: Roboto, Helvetica Neue, sans-serif;
+    }
+    
+    h1 {
+        font-size: 48px;
+    }
+    
+    h2 {
+        color: var(--main-color);
+        font-weight: bold;
+        font-size: 48px;
+        background-color: transparent;
+        margin: 0;
+    }
+    
+    h3 {
+        color: Gray;
+        font-size: 24px;
+        background-color: transparent;
+        margin: 0;
+        font-weight:lighter;
+    }
+    
+    .feather {
+        width: 100px;
+        height: 100px;
+        color: var(--main-color);
+    }
+    
+    .interval-icon {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .interval-time {
+        color: var(--main-color);
+    }
+    
+    .interval-count {
+        color: var(--main-color);
+        font-size:24px;
+        font-weight: bold;
+    }
+    
+    .interval-visitors {
+        color: Gray;
+        font-weight: lighter;
+    }
+
+    .border-top {
+        border-top: 5px dashed var(--main-color);
+    }
+    .border-top-solid {
+        border-top: 5px solid var(--main-color);
+    }
+
+    
+    .sideLines {
+        background-color: var(--main-color);
+        min-height: 200px;
+        color: white;
+        font-weight: bold;
+        font-size: 30px;
+        writing-mode: vertical-rl;
+        text-transform: uppercase;
+        display: flex;
+            line-height: 1.7em;
+    }
+    
+    .counter-item {
+    display: grid;
+    justify-content: center;
+    align-content: center;
+    text-align: center;
+    }
+
+.grid-container {
+    height: 90vh;
+  display: grid;
+  grid-template-columns: 50px 1fr 50px;
+  grid-template-rows: 2fr 1fr 1fr 1fr;
+  gap: 0px 0px;
+  grid-template-areas:
+    "todaySep todayContent todaySide"
+    "weekSide weekContent weekSep"
+    "monthSep monthContent monthSide"
+    "yearSide yearContent yearSep";
+}
+
+.todaySep { grid-area: todaySep; }
+
+.todayContent {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 0px 0px;
+  grid-template-areas:
+    "firstVisitor currentVisitor"
+    "intervals todayVisitors";
+  grid-area: todayContent;
+}
+
+.firstVisitor { grid-area: firstVisitor; }
+
+.currentVisitor { grid-area: currentVisitor; }
+
+.intervals { grid-area: intervals; }
+
+.todayVisitors { grid-area: todayVisitors; }
+
+.todaySide { grid-area: todaySide; }
+
+.weekSep { grid-area: weekSep; }
+
+.weekContent { grid-area: weekContent; }
+
+.weekSide { grid-area: weekSide; }
+
+.monthSep { grid-area: monthSep; }
+
+.monthContent { grid-area: monthContent; }
+
+.monthSide { grid-area: monthSide; }
+
+.yearSep { grid-area: yearSep; }
+
+.yearContent {
+  /* display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+  gap: 0px 0px;
+  grid-template-areas:
+    "yearOwls yearVisitors";
+  grid-area: yearContent;
+  */
+  grid-area: yearContent
+}
+
+.yearOwls { grid-area: yearOwls; }
+
+.yearVisitors { grid-area: yearVisitors; }
+
+.yearSide { grid-area: yearSide; }

@@ -1,0 +1,506 @@
+[
+    {
+        "id": "13ceb173.1a2867",
+        "type": "tab",
+        "label": "Offline queue",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "1a0824de.0b4fbb",
+        "type": "tab",
+        "label": "Heartbeat",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "c31d2e744df5c81c",
+        "type": "tab",
+        "label": "forward error",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "92a06057.d52b1",
+        "type": "http in",
+        "z": "13ceb173.1a2867",
+        "name": "",
+        "url": "/count",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 190,
+        "y": 200,
+        "wires": [
+            [
+                "50bbf8ab.29cdc",
+                "3234a72d.4fafc"
+            ]
+        ]
+    },
+    {
+        "id": "20d1eede.aa382a",
+        "type": "debug",
+        "z": "13ceb173.1a2867",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1050,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "50bbf8ab.29cdc",
+        "type": "http response",
+        "z": "13ceb173.1a2867",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 410,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "3234a72d.4fafc",
+        "type": "http request",
+        "z": "13ceb173.1a2867",
+        "name": "",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "https://counter.iot-lab.dk/count",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "x": 430,
+        "y": 200,
+        "wires": [
+            [
+                "4b548933.e0bdf8"
+            ]
+        ]
+    },
+    {
+        "id": "4b548933.e0bdf8",
+        "type": "switch",
+        "z": "13ceb173.1a2867",
+        "name": "",
+        "property": "statusCode",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "200",
+                "vt": "num"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 610,
+        "y": 200,
+        "wires": [
+            [
+                "bd3de7b6.a2cdb"
+            ],
+            [
+                "56d02765.f5c49"
+            ]
+        ]
+    },
+    {
+        "id": "1d53ac3b.9077bc",
+        "type": "debug",
+        "z": "13ceb173.1a2867",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1070,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "bd3de7b6.a2cdb",
+        "type": "change",
+        "z": "13ceb173.1a2867",
+        "name": "Success",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "Succss",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 820,
+        "y": 100,
+        "wires": [
+            [
+                "20d1eede.aa382a"
+            ]
+        ]
+    },
+    {
+        "id": "1aeb5a25.cca156",
+        "type": "debug",
+        "z": "13ceb173.1a2867",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1790,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "4e4aac2a.ebbb4c",
+        "type": "inject",
+        "z": "13ceb173.1a2867",
+        "name": "Offline upload",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "00 03 * * *",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 200,
+        "y": 460,
+        "wires": [
+            [
+                "a9ee9523693a3f5a"
+            ]
+        ]
+    },
+    {
+        "id": "56d02765.f5c49",
+        "type": "function",
+        "z": "13ceb173.1a2867",
+        "name": "set filename and body",
+        "func": "// msg.filename = new Date(msg.req.body.event_time).getTime().toString();\n// msg.payload = msg.req.body;\n\nconst time = new Date(msg.req.body.event_time).getTime().toString();\n\nlet offline = global.get('offline') || {};\noffline[time] = msg.req.body;\nglobal.set('offline', offline);\n\nmsg.payload = \"offline\";\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 840,
+        "y": 200,
+        "wires": [
+            [
+                "1d53ac3b.9077bc"
+            ]
+        ]
+    },
+    {
+        "id": "74b4ed37.895a54",
+        "type": "http request",
+        "z": "13ceb173.1a2867",
+        "name": "",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "https://counter.iot-lab.dk/count",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "x": 890,
+        "y": 460,
+        "wires": [
+            [
+                "bc0ce932.f4fb5"
+            ]
+        ]
+    },
+    {
+        "id": "bc0ce932.f4fb5",
+        "type": "switch",
+        "z": "13ceb173.1a2867",
+        "name": "",
+        "property": "statusCode",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "200",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1090,
+        "y": 460,
+        "wires": [
+            [
+                "b3cd82c17c0a1883"
+            ]
+        ]
+    },
+    {
+        "id": "5dea30f9.9496f8",
+        "type": "change",
+        "z": "13ceb173.1a2867",
+        "name": "Success",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "Success",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1520,
+        "y": 440,
+        "wires": [
+            [
+                "1aeb5a25.cca156",
+                "d4719cdd.bf406"
+            ]
+        ]
+    },
+    {
+        "id": "d4719cdd.bf406",
+        "type": "link out",
+        "z": "13ceb173.1a2867",
+        "name": "",
+        "links": [
+            "e7cb3b3.fc2bcc8"
+        ],
+        "x": 1735,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "e7cb3b3.fc2bcc8",
+        "type": "link in",
+        "z": "13ceb173.1a2867",
+        "name": "",
+        "links": [
+            "d4719cdd.bf406"
+        ],
+        "x": 255,
+        "y": 500,
+        "wires": [
+            [
+                "a9ee9523693a3f5a"
+            ]
+        ]
+    },
+    {
+        "id": "60fb466.68d52b8",
+        "type": "inject",
+        "z": "1a0824de.0b4fbb",
+        "name": "Heartbeat",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "10800",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "novonordisk;itu",
+        "payloadType": "str",
+        "x": 210,
+        "y": 100,
+        "wires": [
+            [
+                "7e9e25b8.a56d1c"
+            ]
+        ]
+    },
+    {
+        "id": "7e9e25b8.a56d1c",
+        "type": "http request",
+        "z": "1a0824de.0b4fbb",
+        "name": "",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "https://counter.iot-lab.dk/heartbeat",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "x": 410,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "72683a562296627e",
+        "type": "http in",
+        "z": "c31d2e744df5c81c",
+        "name": "",
+        "url": "/error",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 170,
+        "y": 260,
+        "wires": [
+            [
+                "3b36b18dec5e469b",
+                "018d7336b3515e71"
+            ]
+        ]
+    },
+    {
+        "id": "3b36b18dec5e469b",
+        "type": "http response",
+        "z": "c31d2e744df5c81c",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 410,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "018d7336b3515e71",
+        "type": "http request",
+        "z": "c31d2e744df5c81c",
+        "name": "",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "https://counter.iot-lab.dk/error",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "x": 430,
+        "y": 260,
+        "wires": [
+            [
+                "410f1db9d1cc19e8"
+            ]
+        ]
+    },
+    {
+        "id": "410f1db9d1cc19e8",
+        "type": "debug",
+        "z": "c31d2e744df5c81c",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 690,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "0e3aec4c1426d756",
+        "type": "switch",
+        "z": "13ceb173.1a2867",
+        "name": "ignore if empty",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "nnull"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 610,
+        "y": 460,
+        "wires": [
+            [
+                "74b4ed37.895a54"
+            ]
+        ]
+    },
+    {
+        "id": "a9ee9523693a3f5a",
+        "type": "function",
+        "z": "13ceb173.1a2867",
+        "name": "grab first",
+        "func": "let offline = global.get('offline') || {};\n\nif (Object.keys(offline).length !== 0) {\n    msg.payload = offline[Object.keys(offline)[0]];\n    msg.topic = Object.keys(offline)[0]\n} else {\n    msg.payload = null;\n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 420,
+        "y": 460,
+        "wires": [
+            [
+                "0e3aec4c1426d756"
+            ]
+        ]
+    },
+    {
+        "id": "b3cd82c17c0a1883",
+        "type": "function",
+        "z": "13ceb173.1a2867",
+        "name": "delete",
+        "func": "let offline = global.get('offline') || {};\n\ndelete offline[msg.topic]\n\nglobal.set('offline', offline);\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1270,
+        "y": 460,
+        "wires": [
+            [
+                "5dea30f9.9496f8"
+            ]
+        ]
+    }
+]

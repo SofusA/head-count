@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Skylab Door Counter</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src *; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com">
+  <script src="https://unpkg.com/feather-icons"></script>
+  <link rel="stylesheet" href="/static/skylab.css">
+</head>
+
+<body>
+  <div id="counterContent">
+
+    <h1><span id='year'></span> in numbers</h1>
+
+    <div class="grid-container">
+      <div class="counter-item todaySep"></div>
+      <div class="counter-item todayContent">
+        <div class="counter-item firstVisitor">
+          <table style=width:100%>
+            <tr>
+              <td><i data-feather="coffee"></i></td>
+            </tr>
+            <tr>
+              <td>
+                <h2 id='firstVisitor'></h2>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <h3>First visitor</h3>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div class="counter-item currentVisitor">
+          <table style=width:100%>
+            <tr>
+              <td><i data-feather="map-pin"></i></td>
+            </tr>
+            <tr>
+              <td>
+                <h2 id='currentVisitors'></h2>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <h3>Current visitors</h3>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div class="counter-item intervals">
+          <table style="width:100%">
+            <tr>
+              <td>
+                <i class="interval-icon" data-feather="sunrise"></i>
+                <span class="interval-time"><br />06-12</span>
+              </td>
+              <td style="padding-left: 20px;">
+                <span class="interval-count" id='todayMorning'> </span> <span class="interval-visitors">
+                  <br /> Visitors</span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <i class="interval-icon" data-feather="sun"></i>
+                <span class="interval-time"><br />12-17</span>
+              </td>
+              <td style="padding-left: 20px;">
+                <span class="interval-count" id='todayAfternoon'> </span> <span class="interval-visitors">
+                  <br /> Visitors</span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <i class="interval-icon" data-feather="moon"></i>
+                <span class="interval-time"><br />17-06</span>
+              </td>
+              <td style="padding-left: 20px;">
+                <span class="interval-count" id='todayNight'> </span> <span class="interval-visitors"> <br />
+                  Visitors</span>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div class="counter-item todayVisitors">
+          <h2 style="font-size: 100px!important" id='todayVisitors'></h2>
+          <h3>Today visitors</h3>
+        </div>
+      </div>
+      <div class="counter-item todaySide sideLines">Today</div>
+      <div class="counter-item weekSep border-top-solid"></div>
+      <div class="counter-item weekContent border-top">
+        <h2 id='weekVisitors'></h2>
+        <h3>Visitors this week</h3>
+      </div>
+      <div class="counter-item weekSide sideLines">This week</div>
+      <div class="counter-item monthSep border-top-solid"></div>
+      <div class="counter-item monthContent border-top">
+        <h2 id='monthVisitors'></h2>
+        <h3>Visitors this month</h3>
+      </div>
+      <div class="counter-item monthSide sideLines">This Month</div>
+      <div class="counter-item yearSep border-top-solid"></div>
+      <div class="counter-item yearContent border-top">
+        <h2 id='yearVisitors'></h2>
+        <h3>Visitors this year</h3>
+      </div>
+      <div class="counter-item sideLines yearSide">This Year</div>
+    </div>
+  </div>
+
+
+
+  <script>feather.replace()</script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/static/restart.js"></script>
+
+  <script>
+    var page = {
+      year: document.getElementById('year'),
+      firstVisitor: document.getElementById('firstVisitor'),
+      currentVisitors: document.getElementById('currentVisitors'),
+      todayMorning: document.getElementById('todayMorning'),
+      todayAfternoon: document.getElementById('todayAfternoon'),
+      todayNight: document.getElementById('todayNight'),
+      todayVisitors: document.getElementById('todayVisitors'),
+      weekVisitors: document.getElementById('weekVisitors'),
+      monthVisitors: document.getElementById('monthVisitors'),
+      yearVisitors: document.getElementById('yearVisitors')
+    }
+
+    var socket = io(); // Initate Socket.io
+
+    socket.on("connect", function () {
+      if (socket.emit('join', 'front/test')) { console.log('Subscribed to Test channel') } // Send join request to server
+    });
+
+    // When update message → Update the table and store msg
+    socket.on('update', function (msg) {
+      console.log(msg)
+      update(msg)
+
+    })
+
+    function update(msg) {
+      msg['firstVisitor'] = firstVisitor(msg['firstVisitor']) // nice format the first visitor
+      const d = new Date
+      msg['year'] = d.getFullYear()
+      for (const [key, value] of Object.entries(msg)) {
+        if (page[key]) {page[key].innerHTML = value}
+      }
+      
+    }
+
+    const firstVisitor = (input) => {
+      let output;
+
+      if (input === 0) {
+        output = "No early birds yet"
+        return output
+      }
+
+      const date = new Date(input);
+
+      const hours = "0" + date.getHours();
+      const minutes = "0" + date.getMinutes();
+
+      output = hours.substr(-2) + ":" + minutes.substr(-2);
+      return output;
+    }
+
+  </script>
+</body>
+
+</html>

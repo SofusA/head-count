@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Counter status</title>
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src *; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval' ">
+  <link rel="stylesheet" href="/static/bootstrap.min.css">
+</head>
+
+<body class='bg-light container py-4'>
+  <header class='pb-3 mb-4 border-bottom'>
+    <span class='fs-4'>Visitor Counter System Status</span><br />
+    <span>by Iot-Lab</span>
+  </header>
+
+  <div class='px-md-5'>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Camera</th>
+          <th>Internet Connection</th>
+          <th>Time since last message</th>
+        </tr>
+      </thead>
+      <tbody id="cameraTable">
+      </tbody>
+    </table>
+  </div>
+
+  <footer class='pt-3 mt-4 border-top'>
+    <p>Contact Sofus: <br />Telephone: +45 28 90 08 48 <br />Mail: sofus@addington.dk</p>
+  </footer>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/static/restart.js"></script>
+
+  <script>
+    var socket = io(); // Initate Socket.io
+    var cameraTable = document.getElementById('cameraTable'); // Find table
+    let msgStore = [] // For storing last msg
+
+    socket.on("connect", function () {
+      if (socket.emit('join', 'tool/status')) { console.log('Subscribed to status channel') } // Send join request to server
+    });
+
+    // When update message → Update the table and store msg
+    socket.on('update', function (msg) {
+      console.log(msg)
+      updateTable(msg) // update
+      msgStore = msg // store
+    })
+
+    // Update every second
+    var intervalID = window.setInterval(autoUpdate, 5000);
+    function autoUpdate() {
+      updateTable(msgStore)
+    }
+
+    // Function for updating the table
+    function updateTable(msg) {
+      tb = ''
+      const time = Date.now()
+
+      for (row of msg) {
+        // camera name
+        tb = tb.concat('<tr><td>' + sensorName(row.sensor) + '</td>')
+
+        // Heartbeat
+        const heartbeatTime = time - row.heartbeat
+        if (heartbeatTime < 8.64e7) {
+          tb = tb.concat('<td class = "bg-success text-light">' + timeDifference(time, row.heartbeat) + '</td>')
+        } else {
+          tb = tb.concat('<td class = "bg-danger text-light">' + timeDifference(time, row.heartbeat) + '</td>')
+        }
+        // Last message
+        const lastMsgTime = time - row.lastMsg
+        if (lastMsgTime < 8.64e7) {
+          tb = tb.concat('<td class = "bg-success text-light">' + timeDifference(time, row.lastMsg) + '</td>')
+        } else {
+          tb = tb.concat('<td class = "bg-danger text-light">' + timeDifference(time, row.lastMsg) + '</td>')
+        }
+        tb.concat('</tr>')
+      }
+      cameraTable.innerHTML = tb
+      // console.log('Table Updated')
+    }
+
+    function numParse(x) {
+      return Number.parseFloat(x).toFixed(1);
+    }
+
+    function sensorName(x) {
+      return x.replace(/[;]+/g, ' → ')
+    }
+
+    function timeDifference(current, previous) {
+      var msPerMinute = 60 * 1000;
+      var msPerHour = msPerMinute * 60;
+      var msPerDay = msPerHour * 24;
+      var msPerMonth = msPerDay * 30;
+      var msPerYear = msPerDay * 365;
+
+      var elapsed = current - previous;
+
+      if (elapsed < msPerMinute) {
+        return Math.round(elapsed / 1000) + ' seconds ago';
+      }
+
+      else if (elapsed < msPerHour) {
+        return Math.round(elapsed / msPerMinute) + ' minutes ago';
+      }
+
+      else if (elapsed < msPerDay) {
+        return Math.round(elapsed / msPerHour) + ' hours ago';
+      }
+
+      else if (elapsed < msPerMonth) {
+        return 'approximately ' + Math.round(elapsed / msPerDay) + ' days ago';
+      }
+
+      else if (elapsed < msPerYear) {
+        return 'approximately ' + Math.round(elapsed / msPerMonth) + ' months ago';
+      }
+
+      else {
+        return 'approximately ' + Math.round(elapsed / msPerYear) + ' years ago';
+      }
+    }
+
+
+
+  </script>
+</body>
+
+</html>

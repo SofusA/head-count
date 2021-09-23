@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>ITU Door Counter</title>
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src *; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval' ">
+  <link rel="stylesheet" href="/static/bootstrap.min.css">
+</head>
+
+<body class='bg-light container py-4'>
+  <header class='pb-3 mb-4 border-bottom'>
+
+    <span class='fs-4'>Novonordisk ITU Visitor Counter System</span><br />
+  </header>
+
+  <div class='px-md-5'>
+    <table class="table">
+
+      <tbody id="tableContent">
+      </tbody>
+    </table>
+  </div>
+
+  <footer class='pt-3 mt-4 border-top'>
+    <p>Contact Sofus: <br />Telephone: +45 28 90 08 48 <br />Mail: sofus@addington.dk</p>
+  </footer>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/static/restart.js"></script>
+
+  <script>
+
+    var socket = io(); // Initate Socket.io
+
+    socket.on("connect", function () {
+      if (socket.emit('join', 'front/novonordisk')) { console.log('Subscribed to ITU channel') } // Send join request to server
+    });
+
+    // When update message → Update the table and store msg
+    socket.on('update', function (msg) {
+      console.log(msg)
+      update(msg)
+
+    })
+
+    let tableContent = document.getElementById('tableContent')
+
+    // Function for updating the table
+    function update(msg) {
+
+      // firstVisitor
+      tb = '<tr><td>Todays first visitor</td><td>' + firstVisitor(msg.firstVisitor) + '</td></tr>'
+
+      // Today
+      tb = tb.concat('<tr><td>Today visitors</td><td>' + msg.todayVisitors + '</td></tr>')
+
+      // weekVisitors
+      tb = tb.concat('<tr><td>This week</td><td>' + msg.weekVisitors + '</td></tr>')
+
+      // monthVisitors
+      tb = tb.concat('<tr><td>This month</td><td>' + msg.monthVisitors + '</td></tr>')
+
+      // yearVisitors
+      tb = tb.concat('<tr><td>This year</td><td>' + msg.yearVisitors + '</td></tr>')
+
+      // totalVisitors
+      tb = tb.concat('<tr><td>Total visitors</td><td>' + msg.totalVisitors + '</td></tr>')
+
+      tableContent.innerHTML = tb
+    }
+
+    const firstVisitor = (input) => {
+      let output;
+
+      if (input === 0) {
+        output = "No early birds yet"
+        return output
+      }
+
+      const date = new Date(input);
+
+      const hours = "0" + date.getHours();
+      const minutes = "0" + date.getMinutes();
+
+      output = hours.substr(-2) + ":" + minutes.substr(-2);
+      return output;
+    }
+
+  </script>
+</body>
+
+</html>
