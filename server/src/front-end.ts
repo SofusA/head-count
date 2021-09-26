@@ -1,15 +1,16 @@
 import sqlite3 from 'sqlite3'
 let db = new sqlite3.Database('database.db')
 
+import { DateTime } from 'luxon'
+
 const getFirstVisitor = (location: string) => {
     return new Promise((resolve, reject) => {
-        const three = new Date();
-        three.setHours(3, 0, 0, 0);
-        const query = 'SELECT time from counterTable WHERE instr(door, "' + location + '") > 0 AND time > ' + three.getTime() + ' ORDER BY time ASC LIMIT 1'
+        const three = DateTime.now().startOf('day').plus({hour: 3}).toMillis()
+        const query = 'SELECT time from counterTable WHERE instr(door, "' + location + '") AND time > ' + three + ' ORDER BY time ASC LIMIT 1'
 
-
-        getQuery(query, 'time').then(r => resolve(r))
-
+        db.all(query, function (err, rows) {
+            resolve(rows['time'])
+        })
     })
 }
 
@@ -62,9 +63,8 @@ const getCurrentVisitors = (location: string) => {
 
 const getTodayVisitors = (location: string) => {
     return new Promise((resolve, reject) => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const query = 'SELECT SUM(direction_in) from counterTable WHERE instr(door, "' + location + '") > 0 AND time > ' + today.getTime()
+        const today = DateTime.now().startOf('day').toMillis()
+        const query = 'SELECT SUM(direction_in) from counterTable WHERE instr(door, "' + location + '") > 0 AND time > ' + today
 
         getQuery(query, 'SUM(direction_in)').then(r => resolve(r))
     })
@@ -72,44 +72,30 @@ const getTodayVisitors = (location: string) => {
 
 const getWeekVisitors = (location: string) => {
     return new Promise((resolve, reject) => {
-        const curr = new Date(); // get current date
-        let first = curr.getDate() - curr.getDay() + 1; // First day is the day of the week - the day of the week
-        let last = first + 6; // last day is the first day + 6
+        const firstday = DateTime.now().startOf('week')
+        const lastday = DateTime.now().endOf('week')
 
-        first = first - curr.getDate();
-        last = last - curr.getDate();
-
-        let firstday = new Date();
-        firstday.setDate(firstday.getDate() + first)
-        firstday.setHours(0, 0, 0, 0)
-        let lastday = new Date();
-        lastday.setDate(lastday.getDate() + last)
-        lastday.setHours(24, 0, 0, 0)
-
-        const query = 'SELECT SUM(direction_in) from counterTable WHERE instr(door, "' + location + '") > 0 AND time > ' + firstday.getTime() + ' AND time < ' + lastday.getTime()
+        const query = 'SELECT SUM(direction_in) from counterTable WHERE instr(door, "' + location + '") > 0 AND time > ' + firstday + ' AND time < ' + lastday
         getQuery(query, 'SUM(direction_in)').then(r => resolve(r))
     })
 }
 
 const getMonthVisitors = (location: string) => {
     return new Promise((resolve, reject) => {
-        var monthDate = new Date(), y = monthDate.getFullYear(), m = monthDate.getMonth();
-        var firstday = new Date(y, m, 1);
-        var lastday = new Date(y, m + 1, 0);
+        const firstday = DateTime.now().startOf('month')
+        const lastday = DateTime.now().endOf('month')
 
-        const query = 'SELECT SUM(direction_in) from counterTable WHERE instr(door, "' + location + '") > 0 AND time > ' + firstday.getTime() + ' AND time < ' + lastday.getTime()
+        const query = 'SELECT SUM(direction_in) from counterTable WHERE instr(door, "' + location + '") > 0 AND time > ' + firstday + ' AND time < ' + lastday
         getQuery(query, 'SUM(direction_in)').then(r => resolve(r))
     })
 }
 
 const getYearVisitors = (location: string) => {
     return new Promise((resolve, reject) => {
-        let year = new Date().getFullYear();
-        const thisYear = new Date(year, 0, 1);
-        const nextYear = new Date(year + 1, 0, 1);
+        const firstday = DateTime.now().startOf('year')
+        const lastday = DateTime.now().endOf('year')
 
-
-        const query = 'SELECT SUM(direction_in) from counterTable WHERE instr(door, "' + location + '") > 0 AND time > ' + thisYear.getTime() + ' AND time < ' + nextYear.getTime()
+        const query = 'SELECT SUM(direction_in) from counterTable WHERE instr(door, "' + location + '") > 0 AND time > ' + firstday + ' AND time < ' + lastday
         getQuery(query, 'SUM(direction_in)').then(r => resolve(r))
     })
 }
@@ -140,7 +126,6 @@ const buildIntervalQuery = (location: string) => {
 }
 
 const getQuery = (query: string, output: string) => {
-
     return new Promise((resolve, reject) => {
         db.each(query, function (err, rows) {
             resolve(rows[output])

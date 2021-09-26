@@ -13,12 +13,19 @@ var credentials = {
   cert: fs.readFileSync('/etc/letsencrypt/live/counter.iot-lab.dk/fullchain.pem', 'utf8'),
   ca: fs.readFileSync('/etc/letsencrypt/live/counter.iot-lab.dk/chain.pem', 'utf8')
 };
+
+// var credentials = {
+//   key: fs.readFileSync('/var/home/sofusa/certs/counter.iot-lab.dk/privkey.pem', 'utf8'),
+//   cert: fs.readFileSync('/var/home/sofusa/certs/counter.iot-lab.dk/fullchain.pem', 'utf8'),
+//   ca: fs.readFileSync('/var/home/sofusa/certs/counter.iot-lab.dk/chain.pem', 'utf8')
+// };
+
 var app = express();
 var httpsServer = https.createServer(credentials, app);
 var httpServer = http.createServer(app);
 
-httpsServer.listen(443);
-httpServer.listen(80);
+httpsServer.listen(8443);
+httpServer.listen(8880);
 
 // Redirect to https
 function requireHTTPS(req, res, next) {
@@ -33,19 +40,13 @@ app.use(requireHTTPS);
 import { Server, Socket } from "socket.io";
 const io = new Server(httpsServer)
 
-
-// const app = express();
-// const http = require('http').Server(app);
-// const io = require('socket.io')(http);
-// const port = process.env.PORT || 3000;
-
 // app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'static'), { dotfiles: 'allow'}))
+app.use(express.static(path.join(__dirname, 'static'), { dotfiles: 'allow' }))
 
 // Import api handlers
-import { parseCount, sample } from './count'
+import { parseCount, getCounts } from './count'
 import { updateError, updateHeartbeat, updateSensor, statusPage } from './maintenance';
 import { init_db } from './init_db';
 import { frontPage } from './front-end';
@@ -62,6 +63,18 @@ app.get('/skylab', (req, res) => {
 // serve ITU
 app.get('/itu', (req, res) => {
   res.sendFile(__dirname + '/client/itu.html');
+});
+
+// serve ITU
+app.get('/export/:loc', (req, res) => {
+  res.sendFile(__dirname + '/client/export.html');
+});
+
+app.get('/api/export/:location/start/:start/stop/:stop', (req, res) => {
+
+  getCounts(req.params.location, req.params.start, req.params.stop).then((result) => {
+    res.send(result)
+  });
 });
 
 // serve test
@@ -95,7 +108,6 @@ io.on('connection', (socket: Socket) => {
 
     // update front-end connections
     if (site === 'front') {
-      // console.log('New connection update for: ' + location)
       frontPage(location).then((result) => {
         socket.emit('update', result)
       });
@@ -111,7 +123,7 @@ app.post('/count', (req, res) => {
   // Update sensorlist
   updateSensor(count)
 
-  
+
   let rooms = [...io.of("/").adapter.rooms.keys()];
   for (const room of rooms) {
 

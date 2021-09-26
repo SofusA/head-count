@@ -3,16 +3,21 @@
 
 <head>
   <title>ITU Door Counter</title>
-  <meta http-equiv="Content-Security-Policy"
-    content="default-src *; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval' ">
   <link rel="stylesheet" href="/static/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon"></script>
 </head>
 
 <body class='bg-light container py-4'>
-  <header class='pb-3 mb-4 border-bottom'>
+  <nav class="border-bottom navbar navbar-light bg-light justify-content-between">
+    <span class="navbar-brand">Novonordisk ITU Visitor Counter System</span>
 
-    <span class='fs-4'>Novonordisk ITU Visitor Counter System</span><br />
-  </header>
+    <a href="export/itu" class="btn btn-outline-success my-2 my-sm-0" type="submit">Export</a>
+
+  </nav>
+  <!-- <header class='pb-3 mb-4 border-bottom'>
+    <span class='fs-4'>Novonordisk ITU Visitor Counter System</span>
+  </header> -->
 
   <div class='px-md-5'>
     <table class="table">
@@ -20,6 +25,9 @@
       <tbody id="tableContent">
       </tbody>
     </table>
+  </div>
+
+  <div id="chart">
   </div>
 
   <footer class='pt-3 mt-4 border-top'>
@@ -30,7 +38,7 @@
   <script src="/static/restart.js"></script>
 
   <script>
-
+    var DateTime = luxon.DateTime;
     var socket = io(); // Initate Socket.io
 
     socket.on("connect", function () {
@@ -41,7 +49,6 @@
     socket.on('update', function (msg) {
       console.log(msg)
       update(msg)
-
     })
 
     let tableContent = document.getElementById('tableContent')
@@ -86,6 +93,78 @@
       output = hours.substr(-2) + ":" + minutes.substr(-2);
       return output;
     }
+
+    // Make a nice chart
+
+    updateChart()
+    setInterval(function(){ updateChart() }, 60*1000);
+
+    function updateChart() {
+      const start = DateTime.now().startOf('day').plus({ week: -1 }).toMillis()
+      const stop = DateTime.now().endOf('day').toMillis()
+      const url = `api/export/novonordisk/start/${start}/stop/${stop}`
+      fetch(url)
+        .then((response) => response.json())
+        .then((data) => {
+          console.log(data)
+          // measurements = 
+          chart.updateSeries(formatMeasurements(data, start, stop), false)
+        });
+    }
+
+    function formatMeasurements(input, start, stop) {
+      // construct object
+      let timeArray = {}
+      for (let i = 1; i < 8; i++) {
+        timeArray[DateTime.fromMillis(start).plus({ days: i }).toRelativeCalendar()] = {}
+        for (let j = 0; j < 24; j++) {
+          timeArray[DateTime.fromMillis(start).plus({ days: i }).toRelativeCalendar()][j] = 0
+        }
+      }
+
+      // insert the data
+      for (const measurement of input) {
+        timeArray[DateTime.fromMillis(measurement.time).toRelativeCalendar()][DateTime.fromMillis(measurement.time).toFormat('H')]++ || 1
+      }
+
+      // format to heatmeat
+      let heatmapData = []
+      for (const [day, count] of Object.entries(timeArray)) {
+        let countArray = []
+        for (const [time, counts] of Object.entries(count)) {
+          countArray.push({
+            x: time,
+            y: counts
+          })
+        }
+
+        heatmapData.push({
+          name: day,
+          data: countArray
+        })
+      }
+
+      return heatmapData
+    }
+
+    var options = {
+      series: [],
+      chart: {
+        height: 350,
+        type: 'heatmap',
+        toolbar: { show: false }
+      },
+      animations: { enabled: false },
+      dataLabels: {
+        enabled: false
+      },
+      colors: ["#008FFB"],
+
+    };
+    var chart = new ApexCharts(document.querySelector("#chart"), options);
+    chart.render();
+
+
 
   </script>
 </body>

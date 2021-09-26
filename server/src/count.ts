@@ -21,11 +21,26 @@ let sendToDatabase = (input: object) => {
     db.run(query)
 }
 
-let sample = () => {
-    db.each("SELECT * FROM counterTable ORDER BY time DESC LIMIT 10", function (err, row) {
-        console.log(row);
-    });
+let getCountsInternal = (location: string, start: string, stop: string) => {
+    return new Promise((resolve, reject) => {
+        const query = `SELECT * from counterTable WHERE instr(door, "${location}") AND time > ${start} and time < ${stop}`
+        getQuery(query).then(r => resolve(r))
+    })
 }
 
-export { parseCount, sample }
+const getCounts = async (location: string, start: string, stop: string) => {
+    const out = await getCountsInternal(location, start, stop)
+    return out;
+}
+
+const getQuery = (query: string) => {
+    return new Promise((resolve, reject) => {
+        db.all(query, function (err, rows) {
+            resolve(rows)
+        })
+    })
+}
+
+
+export { parseCount, getCounts }
 
