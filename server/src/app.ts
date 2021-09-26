@@ -8,24 +8,24 @@ import fs from 'fs'
 import https from 'https'
 import http from 'http'
 
-// var credentials = {
-//   key: fs.readFileSync('/etc/letsencrypt/live/counter.iot-lab.dk/privkey.pem', 'utf8'),
-//   cert: fs.readFileSync('/etc/letsencrypt/live/counter.iot-lab.dk/fullchain.pem', 'utf8'),
-//   ca: fs.readFileSync('/etc/letsencrypt/live/counter.iot-lab.dk/chain.pem', 'utf8')
-// };
-
 var credentials = {
-  key: fs.readFileSync('/var/home/sofusa/certs/counter.iot-lab.dk/privkey.pem', 'utf8'),
-  cert: fs.readFileSync('/var/home/sofusa/certs/counter.iot-lab.dk/fullchain.pem', 'utf8'),
-  ca: fs.readFileSync('/var/home/sofusa/certs/counter.iot-lab.dk/chain.pem', 'utf8')
+  key: fs.readFileSync('/etc/letsencrypt/live/counter.iot-lab.dk/privkey.pem', 'utf8'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/counter.iot-lab.dk/fullchain.pem', 'utf8'),
+  ca: fs.readFileSync('/etc/letsencrypt/live/counter.iot-lab.dk/chain.pem', 'utf8')
 };
+
+// var credentials = {
+//   key: fs.readFileSync('/var/home/sofusa/certs/counter.iot-lab.dk/privkey.pem', 'utf8'),
+//   cert: fs.readFileSync('/var/home/sofusa/certs/counter.iot-lab.dk/fullchain.pem', 'utf8'),
+//   ca: fs.readFileSync('/var/home/sofusa/certs/counter.iot-lab.dk/chain.pem', 'utf8')
+// };
 
 var app = express();
 var httpsServer = https.createServer(credentials, app);
 var httpServer = http.createServer(app);
 
-httpsServer.listen(8443);
-httpServer.listen(8880);
+httpsServer.listen(443);
+httpServer.listen(880);
 
 // Redirect to https
 function requireHTTPS(req, res, next) {
