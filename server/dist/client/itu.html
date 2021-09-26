@@ -58,6 +58,9 @@
 
       // firstVisitor
       tb = '<tr><td>Todays first visitor</td><td>' + firstVisitor(msg.firstVisitor) + '</td></tr>'
+      
+      // current
+      tb = tb.concat('<tr><td>Current visitors</td><td>' + msg.currentVisitors + '</td></tr>')
 
       // Today
       tb = tb.concat('<tr><td>Today visitors</td><td>' + msg.todayVisitors + '</td></tr>')
