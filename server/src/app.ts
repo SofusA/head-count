@@ -24,8 +24,8 @@ var app = express();
 var httpsServer = https.createServer(credentials, app);
 var httpServer = http.createServer(app);
 
-httpsServer.listen(8443);
-httpServer.listen(8880);
+httpsServer.listen(443);
+httpServer.listen(880);
 
 // Redirect to https
 function requireHTTPS(req, res, next) {
