@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <title>Skylab Door Counter</title>
+  <title>Novonordisk Door Counter</title>
   <script src="https://unpkg.com/feather-icons"></script>
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
   <script src="https://cdn.jsdelivr.net/npm/luxon"></script>
@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/bootstrap.min.css">
-  <link rel="stylesheet" href="/static/skylab.css">
+  <link rel="stylesheet" href="/static/novonordisk.css">
 </head>
 
 <body>
@@ -101,8 +101,8 @@
     var DateTime = luxon.DateTime;
 
     socket.on("connect", function () {
-      if (socket.emit('join', 'front/skylab')) {
-        console.log('Subscribed to Skylab channel')
+      if (socket.emit('join', 'front/novonordisk')) {
+        console.log('Subscribed to Novonordisk channel')
       } // Send join request to server
     });
 
@@ -147,7 +147,7 @@
     function updateNightOwls() {
       const stop = DateTime.now().toMillis()
       const start = DateTime.now().startOf('year').toMillis()
-      const url = `api/export/skylab/start/${start}/stop/${stop}`
+      const url = `api/export/novonordisk/start/${start}/stop/${stop}`
       fetch(url)
         .then((response) => response.json())
         .then((data) => {
@@ -176,7 +176,7 @@
         week: -1
       }).toMillis()
       const stop = DateTime.now().endOf('day').toMillis()
-      const url = `api/export/skylab/start/${start}/stop/${stop}`
+      const url = `api/export/novonordisk/start/${start}/stop/${stop}`
       fetch(url)
         .then((response) => response.json())
         .then((data) => {
@@ -242,7 +242,7 @@
       dataLabels: {
         enabled: false
       },
-      colors: ["#FC7634"],
+      colors: ["#01387B"],
     };
     var chart = new ApexCharts(document.querySelector("#chart"), options);
     chart.render();

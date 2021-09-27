@@ -65,26 +65,28 @@ app.get('/itu', (req, res) => {
   res.sendFile(__dirname + '/client/itu.html');
 });
 
-// serve ITU
+// serve export
 app.get('/export/:loc', (req, res) => {
   res.sendFile(__dirname + '/client/export.html');
 });
 
+// serve export API
 app.get('/api/export/:location/start/:start/stop/:stop', (req, res) => {
   getCounts(req.params.location, req.params.start, req.params.stop).then((result) => {
     res.send(result)
   });
 });
 
+// serve export API with ALL
 app.get('/api/export/:location/start/:start/stop/:stop/all', (req, res) => {
   getCounts(req.params.location, req.params.start, req.params.stop, true).then((result) => {
     res.send(result)
   });
 });
 
-// serve test
-app.get('/test', (req, res) => {
-  res.sendFile(__dirname + '/client/test.html');
+// serve novonordisk
+app.get('/novonordisk', (req, res) => {
+  res.sendFile(__dirname + '/client/novonordisk.html');
 });
 
 app.get('/init', (req, res) => {
