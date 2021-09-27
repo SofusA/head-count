@@ -62,7 +62,7 @@
             const start = DateTime.fromISO(e.target.elements.startDate.value).toMillis()
             const stop = DateTime.fromISO(e.target.elements.stopDate.value).toMillis()
             const location = window.location.pathname.split('/')[2]
-            const url = `/api/export/${location}/start/${start}/stop/${stop}`
+            const url = `/api/export/${location}/start/${start}/stop/${stop}/all`
             console.log(url)
             fetch(url)
                 .then((response) => response.json())

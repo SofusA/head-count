@@ -5,7 +5,7 @@ import { DateTime } from 'luxon'
 
 const getFirstVisitor = (location: string) => {
     return new Promise((resolve, reject) => {
-        const three = DateTime.now().startOf('day').plus({hour: 3}).toMillis()
+        const three = DateTime.now().startOf('day').plus({ hour: 3 }).toMillis()
         const query = 'SELECT time from counterTable WHERE instr(door, "' + location + '") AND time > ' + three + ' ORDER BY time ASC LIMIT 1'
 
         db.all(query, function (err, rows) {
@@ -14,49 +14,26 @@ const getFirstVisitor = (location: string) => {
     })
 }
 
-let resetTimeObject = {}
-
-function sameDay(d1, d2) {
-    return d1.getFullYear() === d2.getFullYear() &&
-        d1.getMonth() === d2.getMonth() &&
-        d1.getDate() === d2.getDate();
-}
-
 const getCurrentVisitors = (location: string) => {
     return new Promise((resolve, reject) => {
-
-        // Handle the reset timer
-        const now = new Date();
-        let resetTime = new Date()
-
-        // If resetTimer exists. Define it
-        if (resetTimeObject[location]) {
-            resetTime = resetTimeObject[location]
-        } else { // Otherwise set to today at 03. Only run once every server reset
-            resetTime.setHours(3, 0, 0, 0)
-            resetTimeObject[location] = resetTime;
+        let time = 0
+        // if it is between 24 and 03
+        if (DateTime.now().toFormat('H') > 0 && DateTime.now().toFormat('H') < 3) {
+            time = DateTime.now().plus({ days: -1 }).startOf('day').plus({ hour: 3 }).toMillis()
+        } else {
+            time = DateTime.now().startOf('day').plus({ hour: 3 }).toMillis()
         }
 
-        // If resetTimer has not been reset today, and the time is more than 03, reset to today at 03 and store the timer
-        if (!sameDay(now, resetTime) && now.getHours() > 3) {
-            resetTime = now
-            resetTime.setHours(3, 0, 0, 0);
-            resetTimeObject[location] = resetTime;
-            console.log('New day: resetTimer is reset for: ' + location)
-        }
 
-        const query = 'SELECT SUM(direction_in)-SUM(direction_out) from counterTable WHERE instr(door, "' + location + '") > 0 AND time > ' + resetTime.getTime()
-
-        getQuery(query, 'SUM(direction_in)-SUM(direction_out)').then(r => {
-            if (r < 0) {
-                resetTime = now
-                resetTimeObject[location] = resetTime;
-                console.log('resetTime was reset, due to below 0 visitors. Measured value was: ' + r + '. New reset time: ' + resetTime)
-                resolve(0)
-            } else {
-                resolve(r)
+        const query = `SELECT * from counterTable WHERE instr(door, "${location}") AND time > ${time}`
+        db.all(query, function (err, rows) {
+            let visitors = 0
+            for (const count of rows) {
+                visitors = visitors + count.direction_in - count.direction_out
+                if (visitors < 0) { visitors = 0 }
             }
-            // resolve((r > 0) ? r : 0) // return 0 if below 0
+
+            resolve(visitors)
         })
     })
 }

@@ -47,7 +47,6 @@
 
     // When update message → Update the table and store msg
     socket.on('update', function (msg) {
-      console.log(msg)
       update(msg)
     })
 
@@ -58,7 +57,7 @@
 
       // firstVisitor
       tb = '<tr><td>Todays first visitor</td><td>' + firstVisitor(msg.firstVisitor) + '</td></tr>'
-      
+
       // current
       tb = tb.concat('<tr><td>Current visitors</td><td>' + msg.currentVisitors + '</td></tr>')
 
@@ -100,7 +99,7 @@
     // Make a nice chart
 
     updateChart()
-    setInterval(function(){ updateChart() }, 60*1000);
+    setInterval(function () { updateChart() }, 60 * 1000);
 
     function updateChart() {
       const start = DateTime.now().startOf('day').plus({ week: -1 }).toMillis()
@@ -109,8 +108,7 @@
       fetch(url)
         .then((response) => response.json())
         .then((data) => {
-          console.log(data)
-          // measurements = 
+          // console.log(data)
           chart.updateSeries(formatMeasurements(data, start, stop), false)
         });
     }
@@ -124,10 +122,13 @@
           timeArray[DateTime.fromMillis(start).plus({ days: i }).toRelativeCalendar()][j] = 0
         }
       }
-
+      
       // insert the data
       for (const measurement of input) {
-        timeArray[DateTime.fromMillis(measurement.time).toRelativeCalendar()][DateTime.fromMillis(measurement.time).toFormat('H')]++ || 1
+        const time = DateTime.fromMillis(measurement.time)
+        if (timeArray[time.toRelativeCalendar()]) {
+          timeArray[time.toRelativeCalendar()][time.toFormat('H')]++ || 1
+        }
       }
 
       // format to heatmeat

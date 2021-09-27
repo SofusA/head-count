@@ -21,15 +21,17 @@ let sendToDatabase = (input: object) => {
     db.run(query)
 }
 
-let getCountsInternal = (location: string, start: string, stop: string) => {
+let getCountsInternal = (location: string, start: string, stop: string, all: boolean) => {
     return new Promise((resolve, reject) => {
-        const query = `SELECT * from counterTable WHERE instr(door, "${location}") AND time > ${start} and time < ${stop}`
+        let query = `SELECT * from counterTable WHERE instr(door, "${location}") AND time > ${start} and time < ${stop}`
+        if (!all) {query = query.concat(' and direction_in = 1')}
         getQuery(query).then(r => resolve(r))
     })
 }
 
-const getCounts = async (location: string, start: string, stop: string) => {
-    const out = await getCountsInternal(location, start, stop)
+const getCounts = async (location: string, start: string, stop: string, all: boolean = false) => {
+    
+    const out = await getCountsInternal(location, start, stop, all)
     return out;
 }
 

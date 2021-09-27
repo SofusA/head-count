@@ -71,8 +71,13 @@ app.get('/export/:loc', (req, res) => {
 });
 
 app.get('/api/export/:location/start/:start/stop/:stop', (req, res) => {
-
   getCounts(req.params.location, req.params.start, req.params.stop).then((result) => {
+    res.send(result)
+  });
+});
+
+app.get('/api/export/:location/start/:start/stop/:stop/all', (req, res) => {
+  getCounts(req.params.location, req.params.start, req.params.stop, true).then((result) => {
     res.send(result)
   });
 });

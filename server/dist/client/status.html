@@ -19,7 +19,7 @@
       <thead>
         <tr>
           <th>Camera</th>
-          <th>Internet Connection</th>
+          <!-- <th>Internet Connection</th> -->
           <th>Time since last message</th>
         </tr>
       </thead>
@@ -67,12 +67,12 @@
         tb = tb.concat('<tr><td>' + sensorName(row.sensor) + '</td>')
 
         // Heartbeat
-        const heartbeatTime = time - row.heartbeat
-        if (heartbeatTime < 8.64e7) {
-          tb = tb.concat('<td class = "bg-success text-light">' + timeDifference(time, row.heartbeat) + '</td>')
-        } else {
-          tb = tb.concat('<td class = "bg-danger text-light">' + timeDifference(time, row.heartbeat) + '</td>')
-        }
+        // const heartbeatTime = time - row.heartbeat
+        // if (heartbeatTime < 8.64e7) {
+        //   tb = tb.concat('<td class = "bg-success text-light">' + timeDifference(time, row.heartbeat) + '</td>')
+        // } else {
+        //   tb = tb.concat('<td class = "bg-danger text-light">' + timeDifference(time, row.heartbeat) + '</td>')
+        // }
         // Last message
         const lastMsgTime = time - row.lastMsg
         if (lastMsgTime < 8.64e7) {
