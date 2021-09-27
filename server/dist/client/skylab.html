@@ -17,7 +17,9 @@
   <div class='container-fluid bg-light' style='height:100vh'>
     <!-- Today row -->
     <div class='row' style='height:30vh'>
-      <div class='col spaceline'> <h3 id='year'></h3></div>
+      <div class='col spaceline'>
+        <h3 id='year'></h3>
+      </div>
       <div class='col-10 counter-content'>
         <div class='row py-3'>
           <div class='col'>
@@ -37,12 +39,16 @@
           </div>
         </div>
       </div>
-      <div class='col sideline '> <h3 style='color:white'>Today</h3></div>
+      <div class='col sideline '>
+        <h3 style='color:white'>Today</h3>
+      </div>
     </div>
 
     <!-- Week hours row -->
     <div class='row' style='height:40vh'>
-      <div class='col sideline counter-border-top-solid'><h3 style='color:white'>Visiting Hours</h3></div>
+      <div class='col sideline counter-border-top-solid'>
+        <h3 style='color:white'>Visiting Hours</h3>
+      </div>
       <div id='chart' class='col-11 counter-content counter-border-top'></div>
     </div>
 
@@ -69,7 +75,9 @@
           </div>
         </div>
       </div>
-      <div class='col sideline counter-border-top-solid'><h3 style='color:white'>The past</h3></div>
+      <div class='col sideline counter-border-top-solid'>
+        <h3 style='color:white'>The past</h3>
+      </div>
     </div>
   </div>
 
@@ -143,6 +151,9 @@
     }
 
     updateNightOwls()
+    setInterval(function () {
+      updateNightOwls()
+    }, 60 * 60 * 1000);
 
     function updateNightOwls() {
       const stop = DateTime.now().toMillis()
