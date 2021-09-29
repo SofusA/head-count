@@ -24,7 +24,7 @@ let updateError = (input: object) => {
 
 let updateSensor = (input: object) => {
     let door = input['door'].replace(/['"]+/g, '')
-    door = door.split(';')[0]+';'+door.split(';')[1]
+    // door = door.split(';')[0]+';'+door.split(';')[1]
     // const query = 'UPDATE sensorList set lastMsg = ' + input['time'] + ' WHERE instr(sensor, "' + input['door'].replace(/['"]+/g, '') + '")'
     const query = 'REPLACE INTO sensorList (sensor, lastMsg, heartbeat) VALUES ("' + door + '", ' + new Date().getTime() + ', (SELECT heartbeat FROM sensorList WHERE sensor = "'+ door +'"))'
     db.run(query)
