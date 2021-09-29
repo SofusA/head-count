@@ -3,9 +3,8 @@
 
 <head>
   <title>Counter status</title>
-  <meta http-equiv="Content-Security-Policy"
-    content="default-src *; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval' ">
   <link rel="stylesheet" href="/static/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/luxon"></script>
 </head>
 
 <body class='bg-light container py-4'>
@@ -36,6 +35,7 @@
   <script src="/static/restart.js"></script>
 
   <script>
+    var DateTime = luxon.DateTime;
     var socket = io(); // Initate Socket.io
     var cameraTable = document.getElementById('cameraTable'); // Find table
     let msgStore = [] // For storing last msg
@@ -52,7 +52,7 @@
     })
 
     // Update every second
-    var intervalID = window.setInterval(autoUpdate, 5000);
+    var intervalID = window.setInterval(autoUpdate, 1000);
     function autoUpdate() {
       updateTable(msgStore)
     }
@@ -63,27 +63,23 @@
       const time = Date.now()
 
       for (row of msg) {
-        // camera name
-        tb = tb.concat('<tr><td>' + sensorName(row.sensor) + '</td>')
 
-        // Heartbeat
-        // const heartbeatTime = time - row.heartbeat
-        // if (heartbeatTime < 8.64e7) {
-        //   tb = tb.concat('<td class = "bg-success text-light">' + timeDifference(time, row.heartbeat) + '</td>')
-        // } else {
-        //   tb = tb.concat('<td class = "bg-danger text-light">' + timeDifference(time, row.heartbeat) + '</td>')
-        // }
-        // Last message
-        const lastMsgTime = time - row.lastMsg
-        if (lastMsgTime < 8.64e7) {
-          tb = tb.concat('<td class = "bg-success text-light">' + timeDifference(time, row.lastMsg) + '</td>')
-        } else {
-          tb = tb.concat('<td class = "bg-danger text-light">' + timeDifference(time, row.lastMsg) + '</td>')
+        if (row.lastMsg) {
+          // camera name
+          tb = tb.concat('<tr><td>' + sensorName(row.sensor) + '</td>')
+
+          // Last message
+          const lastMsgTime = time - row.lastMsg
+          if (lastMsgTime < 8.64e7) {
+            tb = tb.concat('<td class = "bg-success text-light">' + timeDifference(time, row.lastMsg) + '</td>')
+          } else {
+            tb = tb.concat('<td class = "bg-danger text-light">' + timeDifference(time, row.lastMsg) + '</td>')
+          }
+          tb.concat('</tr>')
         }
-        tb.concat('</tr>')
+        cameraTable.innerHTML = tb
+        // console.log('Table Updated')
       }
-      cameraTable.innerHTML = tb
-      // console.log('Table Updated')
     }
 
     function numParse(x) {

@@ -9,7 +9,11 @@ const getFirstVisitor = (location: string) => {
         const query = 'SELECT time from counterTable WHERE instr(door, "' + location + '") AND time > ' + three + ' ORDER BY time ASC LIMIT 1'
 
         db.all(query, function (err, rows) {
-            resolve(rows[0]['time'])
+            if (rows[0]) {
+                resolve(rows[0]['time'])
+            } else {
+                resolve(0)
+            }
         })
     })
 }

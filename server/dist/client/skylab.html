@@ -76,7 +76,7 @@
         </div>
       </div>
       <div class='col sideline counter-border-top-solid'>
-        <h3 style='color:white'>The past</h3>
+        <h3 id='past' style='color:white'></h3>
       </div>
     </div>
   </div>
@@ -103,6 +103,7 @@
       monthVisitors: document.getElementById('monthVisitors'),
       yearVisitors: document.getElementById('yearVisitors'),
       nightOwls: document.getElementById('nightOwls'),
+      past: document.getElementById('past'),
     }
 
     var socket = io(); // Initate Socket.io
@@ -125,6 +126,7 @@
       msg['firstVisitor'] = firstVisitor(msg['firstVisitor']) // nice format the first visitor
       const d = new Date
       msg['year'] = d.getFullYear() + ' in numbers'
+      msg['past'] = d.getFullYear() + ' to date'
       for (const [key, value] of Object.entries(msg)) {
         if (page[key]) {
           page[key].innerHTML = value
@@ -171,9 +173,15 @@
               nightOwls++
             }
           }
-          console.log('chainging')
           page['nightOwls'].innerHTML = nightOwls
         });
+    }
+
+    toRelativeDays = (timestamp) => {
+      const now = DateTime.now().startOf('day')
+      const day = DateTime.fromMillis(timestamp).startOf('day')
+
+      return Math.trunc(now.diff(day, "days").toObject().days)
     }
 
 
@@ -199,22 +207,20 @@
     function formatMeasurements(input, start, stop) {
       // construct object
       let timeArray = {}
-      for (let i = 1; i < 8; i++) {
-        timeArray[DateTime.fromMillis(start).plus({
-          days: i
-        }).toRelativeCalendar()] = {}
-        for (let j = 0; j < 24; j++) {
-          timeArray[DateTime.fromMillis(start).plus({
-            days: i
-          }).toRelativeCalendar()][j] = 0
+      for (let i = 0; i < 7; i++) {
+        timeArray[i] = {}
+        for (let j = 6; j < 19; j++) {
+          timeArray[i][j] = '0'
         }
       }
 
       // insert the data
       for (const measurement of input) {
-        const time = DateTime.fromMillis(measurement.time)
-        if (timeArray[time.toRelativeCalendar()]) {
-          timeArray[time.toRelativeCalendar()][time.toFormat('H')]++ || 1
+
+        if (timeArray[toRelativeDays(measurement.time)]) {
+          if (timeArray[toRelativeDays(measurement.time)][DateTime.fromMillis(measurement.time).toFormat('H')]) {
+            timeArray[toRelativeDays(measurement.time)][DateTime.fromMillis(measurement.time).toFormat('H')]++ || 1
+          }
         }
       }
 
@@ -254,6 +260,21 @@
         enabled: false
       },
       colors: ["#FC7634"],
+      yaxis: {
+        labels: {
+          formatter: function (n) {
+            const relativeDates = ['Today', 'Yesteday', ' days ago']
+            return (n >= 2 ? n + relativeDates[2] : relativeDates[n])
+          }
+        },
+      },
+      xaxis: {
+        labels: {
+          formatter: function (n) {
+            return (n < 10 ? '0' : '') + n + ":00";
+          }
+        }
+      }
     };
     var chart = new ApexCharts(document.querySelector("#chart"), options);
     chart.render();

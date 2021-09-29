@@ -15,9 +15,9 @@ var credentials = {
 };
 
 // var credentials = {
-//   key: fs.readFileSync('/var/home/sofusa/certs/counter.iot-lab.dk/privkey.pem', 'utf8'),
-//   cert: fs.readFileSync('/var/home/sofusa/certs/counter.iot-lab.dk/fullchain.pem', 'utf8'),
-//   ca: fs.readFileSync('/var/home/sofusa/certs/counter.iot-lab.dk/chain.pem', 'utf8')
+//   key: fs.readFileSync('/home/sofusa/certs/counter.iot-lab.dk/privkey.pem', 'utf8'),
+//   cert: fs.readFileSync('/home/sofusa/certs/counter.iot-lab.dk/fullchain.pem', 'utf8'),
+//   // ca: fs.readFileSync('/var/home/sofusa/certs/counter.iot-lab.dk/chain.pem', 'utf8')
 // };
 
 var app = express();
