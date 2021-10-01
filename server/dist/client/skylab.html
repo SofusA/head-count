@@ -127,12 +127,15 @@
       const d = new Date
       msg['year'] = d.getFullYear() + ' in numbers'
       msg['past'] = d.getFullYear() + ' to date'
+
+      // <5 current visitors
+      msg['currentVisitors'] = msg['currentVisitors'] < 5 ? '< 5' : msg['currentVisitors'] 
+
       for (const [key, value] of Object.entries(msg)) {
         if (page[key]) {
           page[key].innerHTML = value
         }
       }
-
     }
 
     const firstVisitor = (input) => {
