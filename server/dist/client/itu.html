@@ -54,6 +54,7 @@
 
     // Function for updating the table
     function update(msg) {
+      msg['currentVisitors'] = msg['currentVisitors'] < 5 ? '< 5' : msg['currentVisitors']
 
       // firstVisitor
       tb = '<tr><td>Todays first visitor</td><td>' + firstVisitor(msg.firstVisitor) + '</td></tr>'
