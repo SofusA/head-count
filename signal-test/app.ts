@@ -1,6 +1,8 @@
 import axios from 'axios'
 
-let sendOneCount = (): object => {
+const server = 'http://127.0.0.1:8080/count'
+
+let sendOneCount = () => {
     const time = new Date()
     const count = {
         "channel_id": "f590d746-0a72-43e4-beb7-6fa04f978121",
@@ -31,7 +33,7 @@ let sendOneCount = (): object => {
 };
 
 let sendOne = async () => {
-    axios.post('https://counter.iot-lab.dk/count', sendOneCount())
+    axios.post(server, sendOneCount())
         .then(function (response) {
             console.log("Success");
         })
@@ -58,5 +60,5 @@ let sendHeatbeat = async () => {
 
 }
 
-setInterval(sendOne, 10000)
-setInterval(sendHeatbeat, 30000)
+setInterval(sendOne, 5000)
+// setInterval(sendHeatbeat, 30000)
