@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>ITU Door Counter</title>
+  <link rel="stylesheet" href="/static/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon"></script>
+</head>
+
+<body class='bg-light container py-4'>
+  <nav class="border-bottom navbar navbar-light bg-light justify-content-between">
+    <span class="navbar-brand">Novonordisk ITU Visitor Counter System</span>
+
+    <a href="export/itu" class="btn btn-outline-success my-2 my-sm-0" type="submit">Export</a>
+
+  </nav>
+  <!-- <header class='pb-3 mb-4 border-bottom'>
+    <span class='fs-4'>Novonordisk ITU Visitor Counter System</span>
+  </header> -->
+
+  <div class='px-md-5'>
+    <table class="table">
+
+      <tbody id="tableContent">
+      </tbody>
+    </table>
+  </div>
+
+  <div id="chart">
+  </div>
+
+  <footer class='pt-3 mt-4 border-top'>
+    <p>Contact Sofus: <br />Telephone: +45 28 90 08 48 <br />Mail: sofus@addington.dk</p>
+  </footer>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/static/restart.js"></script>
+
+  <script>
+    var DateTime = luxon.DateTime;
+    var socket = io(); // Initate Socket.io
+
+    socket.on("connect", function () {
+      if (socket.emit('join', 'front/novonordisk')) { console.log('Subscribed to ITU channel') } // Send join request to server
+    });
+
+    // When update message → Update the table and store msg
+    socket.on('update', function (msg) {
+      update(msg)
+    })
+
+    let tableContent = document.getElementById('tableContent')
+
+    // Function for updating the table
+    function update(msg) {
+      msg['currentVisitors'] = msg['currentVisitors'] < 5 ? '< 5' : msg['currentVisitors']
+
+      // firstVisitor
+      tb = '<tr><td>Todays first visitor</td><td>' + firstVisitor(msg.firstVisitor) + '</td></tr>'
+
+      // current
+      tb = tb.concat('<tr><td>Current visitors</td><td>' + msg.currentVisitors + '</td></tr>')
+
+      // Today
+      tb = tb.concat('<tr><td>Today visitors</td><td>' + msg.todayVisitors + '</td></tr>')
+
+      // weekVisitors
+      tb = tb.concat('<tr><td>This week</td><td>' + msg.weekVisitors + '</td></tr>')
+
+      // monthVisitors
+      tb = tb.concat('<tr><td>This month</td><td>' + msg.monthVisitors + '</td></tr>')
+
+      // yearVisitors
+      tb = tb.concat('<tr><td>This year</td><td>' + msg.yearVisitors + '</td></tr>')
+
+      // totalVisitors
+      tb = tb.concat('<tr><td>Total visitors</td><td>' + msg.totalVisitors + '</td></tr>')
+
+      tableContent.innerHTML = tb
+    }
+
+    const firstVisitor = (input) => {
+      let output;
+
+      if (input === 0) {
+        output = "No early birds yet"
+        return output
+      }
+
+      const date = new Date(input);
+
+      const hours = "0" + date.getHours();
+      const minutes = "0" + date.getMinutes();
+
+      output = hours.substr(-2) + ":" + minutes.substr(-2);
+      return output;
+    }
+
+    // Make a nice chart
+
+    updateChart()
+    setInterval(function () { updateChart() }, 60 * 1000);
+
+    function updateChart() {
+      const start = DateTime.now().startOf('day').plus({ week: -1 }).toMillis()
+      const stop = DateTime.now().endOf('day').toMillis()
+      const url = `api/export/novonordisk/start/${start}/stop/${stop}`
+      fetch(url)
+        .then((response) => response.json())
+        .then((data) => {
+          // console.log(data)
+          chart.updateSeries(formatMeasurements(data, start, stop), false)
+        });
+    }
+
+    function formatMeasurements(input, start, stop) {
+      // construct object
+      let timeArray = {}
+      for (let i = 1; i < 8; i++) {
+        timeArray[DateTime.fromMillis(start).plus({ days: i }).toRelativeCalendar()] = {}
+        for (let j = 0; j < 24; j++) {
+          timeArray[DateTime.fromMillis(start).plus({ days: i }).toRelativeCalendar()][j] = 0
+        }
+      }
+      
+      // insert the data
+      for (const measurement of input) {
+        const time = DateTime.fromMillis(measurement.time)
+        if (timeArray[time.toRelativeCalendar()]) {
+          timeArray[time.toRelativeCalendar()][time.toFormat('H')]++ || 1
+        }
+      }
+
+      // format to heatmeat
+      let heatmapData = []
+      for (const [day, count] of Object.entries(timeArray)) {
+        let countArray = []
+        for (const [time, counts] of Object.entries(count)) {
+          countArray.push({
+            x: time,
+            y: counts
+          })
+        }
+
+        heatmapData.push({
+          name: day,
+          data: countArray
+        })
+      }
+
+      return heatmapData
+    }
+
+    var options = {
+      series: [],
+      chart: {
+        height: 350,
+        type: 'heatmap',
+        toolbar: { show: false }
+      },
+      animations: { enabled: false },
+      dataLabels: {
+        enabled: false
+      },
+      colors: ["#008FFB"],
+
+    };
+    var chart = new ApexCharts(document.querySelector("#chart"), options);
+    chart.render();
+
+
+
+  </script>
+</body>
+
+</html>
