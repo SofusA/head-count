@@ -16,3 +16,5 @@ node_modules
 *.js.map
 !restart.js
 !flows.js
+!chart.js
+!subscribe.js
