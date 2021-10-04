@@ -60,11 +60,11 @@ let sendHeatbeat = async () => {
 
 }
 
-console.log("Sending 10 counts in a row")
-for (let i = 0; i<10; i++){
-    sendOne()
-    console.log(`Sending: ${i}`)
-}
+// console.log("Sending 10 counts in a row")
+// for (let i = 0; i<10; i++){
+//     sendOne()
+//     console.log(`Sending: ${i}`)
+// }
 
-// setInterval(sendOne, 5000)
+setInterval(sendOne, 5000)
 // setInterval(sendHeatbeat, 30000)
