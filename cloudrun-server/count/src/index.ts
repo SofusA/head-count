@@ -1,7 +1,20 @@
 import express from 'express';
+import path from 'path'
+import helmet from 'helmet';
+
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+// app.use(helmet());
+
+// helmet stuff
+// app.use(helmet.contentSecurityPolicy({
+//   directives: {
+//     defaultSrc: ["'self'"],
+//     scriptSrc: ["'self'", 'cdn.jsdelivr.net'],
+//     styleSrc: ["'self'", 'cdn.jsdelivr.net'],
+//   }
+// }));
 
 // Connect to supabase
 import { createClient } from '@supabase/supabase-js'
@@ -12,6 +25,8 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 app.get('/', (req, res) => {
   res.send(`Hello`);
 });
+
+app.use(express.static(path.join(__dirname, 'static')))
 
 app.post('/count', (req, res) => {
   // parse and put to database
@@ -38,12 +53,11 @@ const updateSensorList = async (count: Object) => {
   const parsedCount = parseCount(count)
 
   const { data, error } = await supabase
-    .from('sensor').upsert([{door: parsedCount.door, lastMsg: parsedCount.time}])
+    .from('sensor').upsert([{ door: parsedCount.door, lastMsg: parsedCount.time }])
 
   if (error) { return error }
   return data
 }
-
 
 const addNew = async (count: Object) => {
   let { data, error } = await supabase.from('counter').insert([

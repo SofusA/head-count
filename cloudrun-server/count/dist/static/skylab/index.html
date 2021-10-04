@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Novo Nordisk Door Counter</title>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.22.6/dist/umd/supabase.min.js"></script>
+
+  <!-- Boostrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css"
+    integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+
+  <!-- Feather -->
+  <script src="https://unpkg.com/feather-icons"></script>
+
+  <!-- Apex charts -->
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+  <!-- Luxon -->
+  <script src="https://cdn.jsdelivr.net/npm/luxon"></script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/style.css">
+
+</head>
+
+<body>
+
+  <div class='container-fluid bg-light' style='height:100vh'>
+    <!-- Today row -->
+    <div class='row' style='height:30vh'>
+      <div class='col spaceline'>
+        <h3 id='year'></h3>
+      </div>
+      <div class='col-10 counter-content'>
+        <div class='row py-3'>
+          <div class='col'>
+            <i data-feather="coffee"></i>
+            <h2 id='firstVisitor'></h2>
+            <h3>First visitor</h3>
+          </div>
+          <div class='col'>
+            <i data-feather="crosshair"></i>
+            <h2 id='currentVisitors'></h2>
+            <h3>Currently inside</h3>
+          </div>
+          <div class='col'>
+            <i data-feather="map-pin"></i>
+            <h2 id='todayVisitors'></h2>
+            <h3>Visitors</h3>
+          </div>
+        </div>
+      </div>
+      <div class='col sideline '>
+        <h3 style='color:white'>Today</h3>
+      </div>
+    </div>
+
+    <!-- Week hours row -->
+    <div class='row' style='height:40vh'>
+      <div class='col sideline counter-border-top-solid'>
+        <h3 style='color:white'>Visiting Hours</h3>
+      </div>
+      <div id='chart' class='col-11 counter-content counter-border-top'></div>
+    </div>
+
+
+    <!-- The past row -->
+    <div class='row' style='height:30vh'>
+      <div class='col spaceline counter-border-top-solid'></div>
+      <div class='col-10 counter-content counter-border-top'>
+        <div class='row py-3'>
+          <div class='col'>
+            <i data-feather="feather"></i>
+            <h2 id='nightOwls'></h2>
+            <h3>Nightowls this year</h3>
+          </div>
+          <div class='col counter-border-right'>
+            <i data-feather="sun"></i>
+            <h2 id='yearVisitors'></h2>
+            <h3>Visitors this year</h3>
+          </div>
+          <div class='col'>
+            <i data-feather="moon"></i>
+            <h2 id='monthVisitors'></h2>
+            <h3>Visitors this month</h3>
+          </div>
+        </div>
+      </div>
+      <div class='col sideline counter-border-top-solid'>
+        <h3 id='past' style='color:white'></h3>
+      </div>
+    </div>
+  </div>
+
+
+  </div>
+  <script>
+    feather.replace()
+  </script>
+
+  <script type="module">
+    let DateTime = luxon.DateTime;
+    import { subscribe, initiatePage, getInData } from '/subscribe.js'
+    import { updateChart, setColour} from '/chart.js'
+    const location = 'skylab'
+    const colour = '#FC7634'
+    //const colour = '#FC7634' // Skylab
+
+    import { reloadAtNight } from '/restart.js'
+    setTimeout(function () { location.reload() }, reloadAtNight());
+
+    let page = {
+      year: document.getElementById('year'),
+      firstVisitor: document.getElementById('firstVisitor'),
+      currentVisitors: document.getElementById('currentVisitors'),
+      todayMorning: document.getElementById('todayMorning'),
+      todayAfternoon: document.getElementById('todayAfternoon'),
+      todayNight: document.getElementById('todayNight'),
+      todayVisitors: document.getElementById('todayVisitors'),
+      // weekVisitors: document.getElementById('weekVisitors'),
+      monthVisitors: document.getElementById('monthVisitors'),
+      yearVisitors: document.getElementById('yearVisitors'),
+      nightOwls: document.getElementById('nightOwls'),
+      past: document.getElementById('past'),
+    }
+
+    const subscribtion = subscribe(location, page)
+
+    initiatePage(location, page)
+
+    setColour(colour)
+    updateChart(location)
+
+  </script>
+</body>
+
+</html>

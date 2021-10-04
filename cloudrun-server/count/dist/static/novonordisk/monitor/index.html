@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Counter monitor</title>
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.22.6/dist/umd/supabase.min.js"></script>
+
+  <!-- Boostrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css"
+    integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+
+  <!-- Luxon -->
+  <script src="https://cdn.jsdelivr.net/npm/luxon"></script>
+</head>
+
+<body class='bg-light container py-4'>
+  <nav class="border-bottom navbar navbar-light bg-light justify-content-between">
+    <span id='title' class="navbar-brand">Visitor Counter System</span>
+
+    <a id='linkToExport' href="/export" class="btn btn-outline-success my-2 my-sm-0" type="submit">Export</a>
+
+  </nav>
+
+  <div class='px-md-5'>
+    <table class="table">
+
+      <tbody id="tableContent">
+        <tr>
+          <td>Todays first visitor</td>
+          <td id='firstVisitor'></td>
+        </tr>
+        <tr>
+          <td>Current visitors</td>
+          <td id='currentVisitors'></td>
+        </tr>
+        <tr>
+          <td>Today visitors</td>
+          <td id='todayVisitors'></td>
+        </tr>
+        <tr>
+          <td>This week</td>
+          <td id='weekVisitors'></td>
+        </tr>
+        <tr>
+          <td>This month</td>
+          <td id='monthVisitors'></td>
+        </tr>
+        <tr>
+          <td>This year</td>
+          <td id='yearVisitors'></td>
+        </tr>
+        <tr>
+          <td>Total visitors</td>
+          <td id='totalVisitors'></td>
+        </tr>
+        <tr>
+          <td>Night visitors (21 to 06)</td>
+          <td id='nightOwls'></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer class='pt-3 mt-4 border-top'>
+    <p>Contact Sofus: <br />Telephone: +45 28 90 08 48 <br />Mail: sofus@addington.dk</p>
+  </footer>
+
+  <script type="module">
+    let DateTime = luxon.DateTime;
+    import { subscribe, initiatePage, getInData } from '/subscribe.js'
+    const location = 'novonordisk'
+    const colour = '#01387B'
+    //const colour = '#FC7634' // Skylab
+
+    // Update export link
+    document.getElementById("linkToExport").href = "/export?" + location;
+
+    // Update title
+    document.getElementById("title").innerHTML = location.charAt(0).toUpperCase() + location.slice(1) + ' Visitor Counter System';
+
+    import { reloadAtNight } from '/restart.js'
+    setTimeout(function () { location.reload() }, reloadAtNight());
+
+    let page = {
+      year: document.getElementById('year'),
+      firstVisitor: document.getElementById('firstVisitor'),
+      currentVisitors: document.getElementById('currentVisitors'),
+      todayMorning: document.getElementById('todayMorning'),
+      todayAfternoon: document.getElementById('todayAfternoon'),
+      todayNight: document.getElementById('todayNight'),
+      todayVisitors: document.getElementById('todayVisitors'),
+      weekVisitors: document.getElementById('weekVisitors'),
+      monthVisitors: document.getElementById('monthVisitors'),
+      yearVisitors: document.getElementById('yearVisitors'),
+      nightOwls: document.getElementById('nightOwls'),
+      totalVisitors: document.getElementById('totalVisitors'),
+    }
+
+    const subscribtion = subscribe(location, page)
+
+    initiatePage(location, page)
+
+  </script>
+</body>
+
+</html>

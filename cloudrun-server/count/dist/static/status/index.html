@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Counter status</title>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.22.6/dist/umd/supabase.min.js"></script>
+
+  <!-- Boostrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css"
+    integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+
+  <!-- Luxon -->
+  <script src="https://cdn.jsdelivr.net/npm/luxon"></script>
+</head>
+
+<body class='bg-light container py-4'>
+  <header class='pb-3 mb-4 border-bottom'>
+    <span class='fs-4'>Visitor Counter System Status</span><br />
+    <span>by Iot-Lab</span>
+  </header>
+
+  <div class='px-md-5'>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Camera</th>
+          <!-- <th>Internet Connection</th> -->
+          <th>Time since last message</th>
+        </tr>
+      </thead>
+      <tbody id="cameraTable">
+      </tbody>
+    </table>
+  </div>
+
+  <footer class='pt-3 mt-4 border-top'>
+    <p>Contact Sofus: <br />Telephone: +45 28 90 08 48 <br />Mail: sofus@addington.dk</p>
+  </footer>
+
+  <script type="module">
+    const supabaseUrl = 'https://flpcdxxaexyriudizhty.supabase.co'
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTYyNjQyNzkyOCwiZXhwIjoxOTQyMDAzOTI4fQ.XoT5qhcfNYapF_rDJxzokPX9eOGCB0hzBW5crHvcnoA'
+    const db = supabase.createClient(supabaseUrl, supabaseKey)
+
+    let DateTime = luxon.DateTime;
+    let cameraTable = document.getElementById('cameraTable'); // Find table
+    import { reloadAtNight } from '/restart.js'
+    setTimeout(function () { location.reload() }, reloadAtNight());
+
+    const sensorName = (x) => {
+      return x.replace(/[;]+/g, ' → ')
+    }
+
+    const timeDifference = (current, previous) => {
+      let msPerMinute = 60 * 1000;
+      let msPerHour = msPerMinute * 60;
+      let msPerDay = msPerHour * 24;
+      let msPerMonth = msPerDay * 30;
+      let msPerYear = msPerDay * 365;
+
+      let elapsed = current - previous;
+
+      if (elapsed < msPerMinute) {
+        return Math.round(elapsed / 1000) + ' seconds ago';
+      }
+
+      else if (elapsed < msPerHour) {
+        return Math.round(elapsed / msPerMinute) + ' minutes ago';
+      }
+
+      else if (elapsed < msPerDay) {
+        return Math.round(elapsed / msPerHour) + ' hours ago';
+      }
+
+      else if (elapsed < msPerMonth) {
+        return 'approximately ' + Math.round(elapsed / msPerDay) + ' days ago';
+      }
+
+      else if (elapsed < msPerYear) {
+        return 'approximately ' + Math.round(elapsed / msPerMonth) + ' months ago';
+      }
+
+      else {
+        return 'approximately ' + Math.round(elapsed / msPerYear) + ' years ago';
+      }
+    }
+
+    // Function for updating the table
+    const updateTable = (msg) => {
+      let tb = ''
+      const time = Date.now()
+
+      for (let row of msg) {
+
+        if (row.lastMsg) {
+          // camera name
+          tb = tb.concat('<tr><td>' + sensorName(row.door) + '</td>')
+
+          // Last message
+          const lastMsgTime = time - row.lastMsg
+          if (lastMsgTime < 8.64e7) {
+            tb = tb.concat('<td class = "bg-success text-light">' + timeDifference(time, row.lastMsg) + '</td>')
+          } else {
+            tb = tb.concat('<td class = "bg-danger text-light">' + timeDifference(time, row.lastMsg) + '</td>')
+          }
+          tb.concat('</tr>')
+        }
+        cameraTable.innerHTML = tb
+      }
+    }
+
+
+    const getSensor = async () => {
+      const { data: sensor, error } = await db
+        .from('sensor')
+        .select('*')
+
+      if (error) { console.log(error) }
+      return sensor
+    }
+
+    getSensor().then(r => updateTable(r))
+
+  </script>
+</body>
+
+</html>
