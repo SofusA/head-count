@@ -11,4 +11,5 @@ Visitor counting system in Node / sqlite
 - [X] Create export page
 - [X] Add restart.js to new pages
 - [ ] helmet.js
+- [ ] Flip the heatmap to look like a calendar 
 - [ ] Go live!
