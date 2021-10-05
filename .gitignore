@@ -11,10 +11,3 @@ node_modules
 .cache
 
 .well-known/
-
-*.js
-*.js.map
-!restart.js
-!flows.js
-!chart.js
-!subscribe.js
