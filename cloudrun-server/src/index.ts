@@ -5,14 +5,13 @@ import helmet from 'helmet';
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-// app.use(helmet());
 
 // helmet stuff
 // app.use(helmet.contentSecurityPolicy({
 //   directives: {
-//     defaultSrc: ["'self'"],
-//     scriptSrc: ["'self'", 'cdn.jsdelivr.net'],
-//     styleSrc: ["'self'", 'cdn.jsdelivr.net'],
+//     defaultSrc: ["'self'", "'unsafe-inline'", 'localhost', '*.supabase.co', '*.jsdelivr.net', 'unpkg.com'],
+//     scriptSrc: ["'self'", "'unsafe-inline'", 'localhost', '*.supabase.co', '*.jsdelivr.net', 'unpkg.com'],
+//     styleSrc: ["'self'", "'unsafe-inline'", 'localhost', '*.supabase.co', '*.jsdelivr.net'],
 //   }
 // }));
 

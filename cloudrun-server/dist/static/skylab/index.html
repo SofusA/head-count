@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <title>Novo Nordisk Door Counter</title>
+  <title>Door Counter</title>
 
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.22.6/dist/umd/supabase.min.js"></script>
@@ -68,7 +68,9 @@
 
     <!-- The past row -->
     <div class='row' style='height:30vh'>
-      <div class='col spaceline counter-border-top-solid'></div>
+      <div class='col spaceline counter-border-top-solid'>
+        <h3>iot-lab.dk</h3>
+      </div>
       <div class='col-10 counter-content counter-border-top'>
         <div class='row py-3'>
           <div class='col'>
@@ -103,13 +105,16 @@
   <script type="module">
     let DateTime = luxon.DateTime;
     import { subscribe, initiatePage, getInData } from '/subscribe.js'
-    import { updateChart, setColour} from '/chart.js'
+    import { updateChart, setColour } from '/chart.js'
     const location = 'skylab'
     const colour = '#FC7634'
     //const colour = '#FC7634' // Skylab
 
     import { reloadAtNight } from '/restart.js'
     setTimeout(function () { location.reload() }, reloadAtNight());
+
+    // document.getElementById('year').innerHTML = `${DateTime.now().toFormat('yyyy')} in numbers`
+    document.getElementById('past').innerHTML = `${DateTime.now().toFormat('yyyy')} to date`
 
     let page = {
       year: document.getElementById('year'),

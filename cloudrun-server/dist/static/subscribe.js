@@ -6,7 +6,7 @@ let DateTime = luxon.DateTime;
 
 const subscribe = (location, elements) => {
     return db
-        .from(`counter:location=eq.${location}`) //only listen to test location
+        .from(`counter:location=eq.${location}`)
         .on('*', payload => {
             initiatePage(location, elements)
         })
@@ -28,8 +28,15 @@ const initiatePage = (location, elements) => {
     let start = 0
     let stop = 0
 
-    firstVisitor(location).then(r => elements['firstVisitor'].innerHTML = r)
-    currentVisitors(location).then(r => elements['currentVisitors'].innerHTML = r)
+    // First visitor
+    if (elements['firstVisitor']) {
+        firstVisitor(location).then(r => elements['firstVisitor'].innerHTML = r)
+    }
+
+    // Current visitors
+    if (elements['currentVisitors']) {
+        currentVisitors(location).then(r => elements['currentVisitors'].innerHTML = r)
+    }
 
     // Today Visitors
     if (elements['todayVisitors']) {
@@ -59,11 +66,18 @@ const initiatePage = (location, elements) => {
         countData(location, start, stop).then(r => elements['yearVisitors'].innerHTML = r)
     }
 
+    // total visitors
+    if (elements['totalVisitors']) {
+        start = DateTime.now().startOf('year').plus({ year: -1 }).toMillis()
+        stop = DateTime.now().toMillis()
+        countData(location, start, stop).then(r => elements['totalVisitors'].innerHTML = r)
+    }
+
     // Night Owls
     if (elements['nightOwls']) {
         start = DateTime.now().startOf('year').toMillis()
         stop = DateTime.now().toMillis()
-        countDataWithTime(location, start, stop, 6, 20).then(r => elements['nightOwls'].innerHTML = r)
+        countNightOwls(location, start, stop).then(r => elements['nightOwls'].innerHTML = r)
     }
 
     return elements
@@ -82,6 +96,8 @@ const firstVisitor = async (location) => {
         .single()
 
     if (error) { return 'No early birds' }
+    
+    if (DateTime.fromMillis(data.time).toFormat('c') !== DateTime.now().toFormat('c')) {return 'No early birds' } // Return no birds if not the same day
 
     return DateTime.fromMillis(data.time).toFormat('HH:MM')
 }
@@ -110,8 +126,6 @@ const currentVisitors = async (location) => {
         if (visitors < 0) { visitors = 0 }
     }
 
-    console.log({visitors: visitors})
-
     return visitors
 }
 
@@ -127,28 +141,43 @@ const countData = async (location, start, stop) => {
     if (error) { console.log(error) }
     return count
 }
-
-const countDataWithTime = async (location, start, stop, time1, time2) => {
-    const { data, error } = await db
+const countNightOwls = async (location, start, stop) => {
+    const { data, error, count } = await db
         .from('counter')
-        .select('*')
+        .select('*', { count: 'exact', head: true })
         .eq('location', location)
         .eq('direction_in', 1)
+        .eq('nightowl', true)
         .gt('time', start)
         .lt('time', stop)
 
     if (error) { console.log(error) }
-
-    let counter = 0;
-    for (const count of data) {
-        const time = DateTime.fromMillis(count.time).toFormat('H');
-
-        if (time < time1 || time > time2) {
-            counter++
-        }
-    }
-    return counter
+    return count
 }
+
+// const countDataWithTime = async (location, start, stop, time1, time2) => {
+//     const { data, error } = await db
+//         .from('counter')
+//         .select('*')
+//         .eq('location', location)
+//         .eq('direction_in', 1)
+//         .gt('time', start)
+//         .lt('time', stop)
+
+//     if (error) { console.log(error) }
+
+//     console.log(data)
+
+//     let counter = 0;
+//     for (const count of data) {
+//         const time = DateTime.fromMillis(count.time).toFormat('H');
+
+//         if (time < time1 || time > time2) {
+//             counter++
+//         }
+//     }
+//     return counter
+// }
 
 const getData = async (location, start, stop) => {
     const { data, error } = await db
@@ -174,6 +203,5 @@ const getInData = async (location, start, stop) => {
     if (error) { console.log(error) }
     return data
 }
-
 
 export { subscribe, initiatePage, getData, getInData }
