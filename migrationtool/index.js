@@ -1,5 +1,6 @@
 let sqlite3 = require('sqlite3')
 let db = new sqlite3.Database('database.db')
+const { DateTime } = require("luxon");
 
 let sb = require('@supabase/supabase-js')
 const supabaseUrl = 'https://flpcdxxaexyriudizhty.supabase.co'
@@ -33,7 +34,6 @@ const checkSupabase = async (rows) => {
         if (!measurement.door.includes(';')) {
             // console.log('Old measurement. Skipping')
             continue
-
         }
 
         // check if test measurement
@@ -46,7 +46,16 @@ const checkSupabase = async (rows) => {
         if (measurement.time <= startTime.time) {
             // console.log('Not a new measurement. Skipping')
             continue
+        }
 
+        // Check nightowl measurement
+        const measurementTime = parseInt(DateTime.fromMillis(row.time).toFormat('H'))
+        const hourStart = 21
+        const hourStop = 6
+
+        if (measurementTime >= hourStart || measurementTime <= hourStop) {
+            measurement['nightowl'] = true
+            // console.log({measurementHour: measurementTime })
         }
 
         // console.log(`Inserting to supabase`)
@@ -60,7 +69,7 @@ const checkSupabase = async (rows) => {
     )
 
     if (error) { console.log(error) }
-    // if (data) { console.log(data) }
+    if (data) { console.log(data) }
 
     return pushArray
 }

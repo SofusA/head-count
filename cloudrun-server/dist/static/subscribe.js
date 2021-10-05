@@ -205,4 +205,4 @@ const getInData = async (location, start, stop) => {
     return data
 }
 
-export { subscribe, initiatePage, getData, getInData }
+export { subscribe, initiatePage, getData, getInData, countData }

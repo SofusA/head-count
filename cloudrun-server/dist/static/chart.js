@@ -1,5 +1,5 @@
 let DateTime = luxon.DateTime;
-import { getInData } from './subscribe.js'
+import { getData } from './subscribe.js'
 
 // let colour = '#D58296'
 const setColour = (c) => {
@@ -9,19 +9,16 @@ const setColour = (c) => {
 }
 
 const updateChart = async (location) => {
-    const start = DateTime.now().startOf('day').plus({
-        week: -1
-    }).toMillis()
-    const stop = DateTime.now().endOf('day').toMillis()
-    let data = await getInData(location, start, stop)
-    console.log(data)
+    const start = DateTime.now().plus({ week: -1, day: 1 }).startOf('day').toMillis()
+    const stop = DateTime.now().toMillis()
+    let data = await getData(location, start, stop)
 
     chart.updateSeries(formatMeasurements(data, start, stop))
 
     return data
 }
 
-const formatMeasurements = (input, start, stop) => {
+const formatMeasurements = (input) => {
     // Define start and stop of the calendar hours
     const startHour = 6
     const stopHour = 19
@@ -30,17 +27,20 @@ const formatMeasurements = (input, start, stop) => {
     // Construct calendar object which holds all hours and all days under that (yeah i know its weirds)
     for (let hour = startHour; hour < stopHour; hour++) {
         calendarObject[hour] = {}
-        for (let i = 1; i <= 7; i++) {
-            calendarObject[hour][i] = '0'
+        for (let day = 1; day <= 7; day++) {
+            calendarObject[hour][day] = '0'
         }
     }
 
     // insert measurements into the calendarObject
     for (const measurement of input) {
         const time = DateTime.fromMillis(measurement.time)
-        if (calendarObject[time.toFormat('H')]) {
-            if (calendarObject[time.toFormat('H')][time.toFormat('c')]) {
-                calendarObject[time.toFormat('H')][time.toFormat('c')]++ || 1
+        if (calendarObject[time.toFormat('H')]) { // if the hour exists
+            if (calendarObject[time.toFormat('H')][time.toFormat('c')]) { // if it is the right day
+                let newCount = parseInt(calendarObject[time.toFormat('H')][time.toFormat('c')]) || 0
+                newCount += measurement.direction_in
+                newCount += measurement.direction_out
+                calendarObject[time.toFormat('H')][time.toFormat('c')] = newCount
             }
         }
     }
@@ -85,13 +85,14 @@ var options = {
                 const relativeDates = ['Monday', 'Tuesday', 'Wednessday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
                 const today = DateTime.now().toFormat('c')
 
-                return (n === today ? 'Today' : `Last ${relativeDates[n-1]}`); // return today or the day of the week
+                return (n === today ? 'Today' : `Last ${relativeDates[n - 1]}`); // return today or the day of the week
             }
         },
     },
     yaxis: {
         labels: {
             formatter: (n) => {
+                if (n.length === 0) { return n } // weird but fixes unknown chart series
                 return (n < 10 ? '0' : '') + n + ":00";
             }
         }
