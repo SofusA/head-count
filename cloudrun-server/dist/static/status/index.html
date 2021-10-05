@@ -111,7 +111,6 @@
       }
     }
 
-
     const getSensor = async () => {
       const { data: sensor, error } = await db
         .from('sensor')
@@ -121,7 +120,27 @@
       return sensor
     }
 
-    getSensor().then(r => updateTable(r))
+    let msgStore = []
+
+    getSensor().then(r => {
+      msgStore = r
+      console.log(msgStore)
+      updateTable(msgStore)
+    })
+
+    const sensor = db
+      .from('sensor')
+      .on('UPDATE', payload => {
+        getSensor().then(r => {
+          msgStore = r
+          updateTable(r)
+        })
+        console.log('New update')
+      })
+      .subscribe()
+
+    // Update every second
+    setInterval(function(){ updateTable(msgStore)}, 1000);
 
   </script>
 </body>
