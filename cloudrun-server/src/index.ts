@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path'
 import helmet from 'helmet';
+import { DateTime } from "luxon";
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
@@ -68,11 +69,25 @@ const addNew = async (count: Object) => {
 }
 
 const parseCount = (count: Object) => {
+  const time = new Date(count['event_time']).getTime()
+
+  // Check nightowl measurement
+  const measurementTime = parseInt(DateTime.fromMillis(time).toFormat('H'))
+  const hourStart = 21
+  const hourStop = 6
+
+  let nightOwl = false
+  if (measurementTime >= hourStart || measurementTime <= hourStop) {
+    nightOwl = true
+  }
+
+  // Construct payload
   const msgOut = {
     door: count['channel_name'],
-    time: new Date(count['event_time']).getTime(),
+    time: time,
     ...(count['rule_name'] == "Enter" && { "direction_in": 1 }),
     ...(count['rule_name'] == "Exit" && { "direction_out": 1 }),
+    ...(nightOwl && { "nightowl": true }),
     location: count['channel_name'].split(';')[0]
   };
 

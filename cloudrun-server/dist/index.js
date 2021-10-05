@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
+const luxon_1 = require("luxon");
 const app = (0, express_1.default)();
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use(express_1.default.json());
@@ -70,7 +71,17 @@ const addNew = (count) => __awaiter(void 0, void 0, void 0, function* () {
     return data;
 });
 const parseCount = (count) => {
-    const msgOut = Object.assign(Object.assign(Object.assign({ door: count['channel_name'], time: new Date(count['event_time']).getTime() }, (count['rule_name'] == "Enter" && { "direction_in": 1 })), (count['rule_name'] == "Exit" && { "direction_out": 1 })), { location: count['channel_name'].split(';')[0] });
+    const time = new Date(count['event_time']).getTime();
+    // Check nightowl measurement
+    const measurementTime = parseInt(luxon_1.DateTime.fromMillis(time).toFormat('H'));
+    const hourStart = 21;
+    const hourStop = 6;
+    let nightOwl = false;
+    if (measurementTime >= hourStart || measurementTime <= hourStop) {
+        nightOwl = true;
+    }
+    // Construct payload
+    const msgOut = Object.assign(Object.assign(Object.assign(Object.assign({ door: count['channel_name'], time: time }, (count['rule_name'] == "Enter" && { "direction_in": 1 })), (count['rule_name'] == "Exit" && { "direction_out": 1 })), (nightOwl && { "nightowl": true })), { location: count['channel_name'].split(';')[0] });
     return msgOut;
 };
 //# sourceMappingURL=index.js.map

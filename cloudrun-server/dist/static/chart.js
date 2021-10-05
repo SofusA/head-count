@@ -14,6 +14,7 @@ const updateChart = async (location) => {
     }).toMillis()
     const stop = DateTime.now().endOf('day').toMillis()
     let data = await getInData(location, start, stop)
+    console.log(data)
 
     chart.updateSeries(formatMeasurements(data, start, stop))
 

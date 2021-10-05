@@ -91,15 +91,16 @@ const firstVisitor = async (location) => {
         .select('*')
         .eq('location', location)
         .eq('direction_in', 1)
-        .order('time', { ascending: false })
+        .gt('time', DateTime.now().startOf('day').plus({ hour: 5 }).toMillis())
+        .order('time', { ascending: true })
         .limit(1)
         .single()
 
     if (error) { return 'No early birds' }
-    
-    if (DateTime.fromMillis(data.time).toFormat('c') !== DateTime.now().toFormat('c')) {return 'No early birds' } // Return no birds if not the same day
 
-    return DateTime.fromMillis(data.time).toFormat('HH:MM')
+    if (DateTime.fromMillis(data.time).toFormat('c') !== DateTime.now().toFormat('c')) { return 'No early birds' } // Return no birds if not the same day
+
+    return DateTime.fromMillis(data.time).toFormat('HH:mm')
 }
 
 const currentVisitors = async (location) => {
