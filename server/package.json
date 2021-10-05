@@ -5,8 +5,7 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "start": "node dist/index.js",
-    "start:nodemon": "./node_modules/nodemon/bin/nodemon.js"
+    "start": "./node_modules/nodemon/bin/nodemon.js"
   },
   "author": "Sofus Addington",
   "license": "Apache-2.0",

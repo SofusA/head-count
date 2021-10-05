@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "tsc && node dist/app.js",
-    "start:nodemon": "./node_modules/nodemon/bin/nodemon.js"
+    "start": "./node_modules/nodemon/bin/nodemon.js"
   },
   "author": "",
   "license": "ISC",

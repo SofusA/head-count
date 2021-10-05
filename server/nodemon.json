@@ -1,6 +1,6 @@
 {
   "ignore": [".git", "node_modules", "dist"],
   "watch": ["src/"], 
-  "exec": "tsc && cp src/static dist/static npm start",
+  "exec": "tsc && cp -r src/static dist/static && npm start",
   "ext": "ts"
 }
