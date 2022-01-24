@@ -108,8 +108,5 @@ export class Dashboard {
 
         // Update chart
         this.updateChart()
-
-
     }
-
 }

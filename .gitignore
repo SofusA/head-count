@@ -13,3 +13,4 @@ node_modules
 .well-known/
 
 dist/
+server/package-lock.json

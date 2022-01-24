@@ -80,7 +80,7 @@ export class Chart {
                 }
             }
         }
-    
+
         // format to heatmeat format
         let heatmapData = []
         for (const [hour, count] of Object.entries(calendarObject)) {
@@ -96,12 +96,12 @@ export class Chart {
                 data: countArray
             })
         }
-    
         return heatmapData.reverse()
     }
 
-    updateChart = async (data: any) => {
+    updateChart = (data: any) => {
         this.chart.updateSeries(this.formatMeasurements(data))
+        console.log(data)
     }
 
     constructor(chartLocation: string, colour: string) {
@@ -110,5 +110,4 @@ export class Chart {
         this.chart = new ApexCharts(document.querySelector(`#${chartLocation}`), this.options);
         this.chart.render();
     }
-
 }
