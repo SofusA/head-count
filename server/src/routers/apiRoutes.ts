@@ -9,20 +9,26 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 router.post('/', (req, res) => {
-    // Put into to database
-    addNew(req.body).then((r) => {
-        console.log(r)
-    })
+    try {
+        // Put into to database
+        addNew(req.body).then((r) => {
+            console.log(r)
+        })
 
-    // Also update sensorlist
-    updateSensorList(req.body).then((r) => {
-        console.log(r)
-    })
+        // Also update sensorlist
+        updateSensorList(req.body).then((r) => {
+            console.log(r)
+        })
 
-    // respond
-    res.send({
-        response: 'OK'
-    });
+        // respond
+        res.send({
+            response: 'OK'
+        });
+        
+    } catch (error) {
+        res.status(400).send(new Error('Error'))
+    }
+    
 });
 
 
@@ -32,7 +38,7 @@ const updateSensorList = async (count: Object) => {
     const { data, error } = await supabase
         .from('sensor').upsert([{ door: parsedCount.door, lastMsg: parsedCount.time }])
 
-    if (error) { return error }
+    if (error) { throw error }
     return data
 }
 
