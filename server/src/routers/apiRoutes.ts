@@ -24,12 +24,36 @@ router.post('/', (req, res) => {
         res.send({
             response: 'OK'
         });
-        
+
     } catch (error) {
         res.status(400).send(new Error('Error'))
     }
-    
+
 });
+
+router.get('/health', (req, res) => {
+    getSensorList().then(status => {
+        res.send({ response: status });
+    })
+})
+
+const getSensorList = async (): Promise<boolean> => {
+    const { data: sensors, error } = await supabase.from('sensor').select('*')
+    const now = Date.now();
+
+    if (sensors != null && sensors?.length < 1) {
+        return false;
+    }
+
+    for (let sensor of sensors!) {
+        const lastMsgTime = now - sensor.lastMsg
+        if (lastMsgTime > 8.64e7) {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 
 const updateSensorList = async (count: Object) => {
