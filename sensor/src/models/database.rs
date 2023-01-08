@@ -1,13 +1,11 @@
-use crate::models::CounterRequest;
+use crate::models::CounterEntry;
 use axum::http::StatusCode;
 use postgrest::Postgrest;
 
 use crate::{database_secret, database_table_name, database_url};
 
-pub async fn add(request: CounterRequest) -> Result<StatusCode, String> {
+pub async fn add(entry: CounterEntry) -> Result<StatusCode, String> {
     let client = get_supabase_client();
-
-    let entry = request.to_entry();
 
     let serialised_entry = serde_json::to_string(&entry).expect("Failed to serialise entry");
 

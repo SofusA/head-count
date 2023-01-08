@@ -70,10 +70,16 @@ pub struct CounterEntry {
     pub enter: bool,
 }
 
+impl CounterEntry {
+    pub fn serialise(&self) -> String {
+        serde_json::to_string(self).expect("Unable to serialise CounterEntry")
+    }
+}
+
 fn get_location(channel_name: &String) -> String {
     channel_name
         .split(";")
-        .nth(0)
+        .next()
         .expect("Location not found")
         .to_string()
 }
@@ -98,7 +104,7 @@ fn is_nightowl(event_time: DateTime<FixedOffset>) -> bool {
 mod tests {
     use super::*;
 
-    fn get_test_entry(enter: bool, time: &str) -> CounterEntry{
+    fn get_test_entry(enter: bool, time: &str) -> CounterEntry {
         let rule_name = match enter {
             true => "Enter",
             false => "Exit",
@@ -109,13 +115,18 @@ mod tests {
             \"channel_name\":\"test;back;door\",
             \"event_name\":\"Crossed line\",
             \"event_origin\":\"Pedestrian\",
-            \"event_time\":\"".to_string() + time + "\",
+            \"event_time\":\""
+            .to_string()
+            + time
+            + "\",
             \"event_type\":\"TripwireCrossed\",
             \"object_id\":9,
             \"rule_id\":\"471fa55d-967b-46a7-b77f-5b9ce6af82ee\",
-            \"rule_name\":\"" + rule_name + "\"
+            \"rule_name\":\""
+            + rule_name
+            + "\"
          }";
-        
+
         let request: CounterRequest = serde_json::from_str(&request_string).unwrap();
 
         request.to_entry()
