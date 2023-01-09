@@ -1,11 +1,17 @@
-use crate::models::{database::add, CounterRequest};
+use crate::{
+    models::{database::add, CounterRequest},
+    store::store,
+};
 use axum::{http::StatusCode, response::IntoResponse, Json};
 
 pub async fn handler(Json(input): Json<CounterRequest>) -> impl IntoResponse {
     let entry = input.to_entry();
 
-    match add(entry).await {
-        Ok(_) => return (StatusCode::CREATED, "Jaa".to_string()),
-        Err(err) => return (StatusCode::BAD_REQUEST, err),
+    match add(&entry).await {
+        Ok(res) => (StatusCode::CREATED, res),
+        Err(err) => {
+            store(&entry);
+            (StatusCode::BAD_REQUEST, err)
+        }
     }
 }

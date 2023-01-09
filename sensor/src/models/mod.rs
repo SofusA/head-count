@@ -39,11 +39,11 @@ impl CounterRequest {
         match enter {
             true => {
                 direction_in = 1;
-                direction_out = 0
+                direction_out = 0;
             }
             false => {
                 direction_in = 0;
-                direction_out = 1
+                direction_out = 1;
             }
         }
 
@@ -76,15 +76,15 @@ impl CounterEntry {
     }
 }
 
-fn get_location(channel_name: &String) -> String {
+fn get_location(channel_name: &str) -> String {
     channel_name
-        .split(";")
+        .split(';')
         .next()
         .expect("Location not found")
         .to_string()
 }
 
-fn get_direction(rule_name: &String) -> bool {
+fn get_direction(rule_name: &str) -> bool {
     if rule_name == "Enter" {
         return true;
     }
@@ -139,8 +139,8 @@ mod tests {
         assert_eq!(entry.location, "test".to_string());
         assert_eq!(entry.door, "test;back;door".to_string());
         assert_eq!(entry.location, "test".to_string());
-        assert_eq!(entry.nightowl, false);
-        assert_eq!(entry.enter, true);
+        assert!(!entry.nightowl);
+        assert!(entry.enter);
         assert_eq!(entry.direction_in, 1);
         assert_eq!(entry.direction_out, 0);
     }
@@ -148,7 +148,7 @@ mod tests {
     #[test]
     fn exit_test() {
         let entry = get_test_entry(false, "2023-01-08T15:11:45+01:00");
-        assert_eq!(entry.enter, false);
+        assert!(!entry.enter);
         assert_eq!(entry.direction_in, 0);
         assert_eq!(entry.direction_out, 1);
     }
@@ -158,7 +158,7 @@ mod tests {
         let early = get_test_entry(true, "2023-01-08T05:11:45+01:00");
         let late = get_test_entry(true, "2023-01-08T22:11:45+01:00");
 
-        assert_eq!(early.nightowl, true);
-        assert_eq!(late.nightowl, true);
+        assert!(early.nightowl);
+        assert!(late.nightowl);
     }
 }
