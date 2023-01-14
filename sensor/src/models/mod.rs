@@ -48,13 +48,25 @@ impl CounterRequest {
         }
 
         CounterEntry {
-            time: date_time.timestamp(),
+            time: date_time.timestamp_millis(),
             door: self.channel_name.clone(),
             location: get_location(&self.channel_name),
             direction_in,
             direction_out,
             nightowl: is_nightowl(date_time),
             enter,
+        }
+    }
+
+    pub fn to_error_sensor_entry(&self) -> SensorEntry {
+        let date_time =
+            DateTime::parse_from_rfc3339(&self.event_time).expect("Error parsing event time");
+
+        SensorEntry {
+            door: self.channel_name.clone(),
+            location: get_location(&self.channel_name),
+            error: Some(date_time.timestamp_millis()),
+            heartbeat: None,
         }
     }
 }
@@ -74,6 +86,15 @@ impl CounterEntry {
     pub fn serialise(&self) -> String {
         serde_json::to_string(self).expect("Unable to serialise CounterEntry")
     }
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SensorEntry {
+    pub door: String,
+    pub location: String,
+
+    pub error: Option<i64>,
+    pub heartbeat: Option<i64>,
 }
 
 fn get_location(channel_name: &str) -> String {
@@ -132,10 +153,31 @@ mod tests {
         request.to_entry()
     }
 
+    fn get_test_error(time: &str) -> SensorEntry {
+        let request_string = "{  
+            \"channel_id\":\"ddbbe807-8560-4bc7-b04b-4b3b04c69339\",
+            \"channel_name\":\"test;back;door\",
+            \"event_name\":\"Crossed line\",
+            \"event_origin\":\"Pedestrian\",
+            \"event_time\":\""
+            .to_string()
+            + time
+            + "\",
+            \"event_type\":\"TripwireCrossed\",
+            \"object_id\":9,
+            \"rule_id\":\"471fa55d-967b-46a7-b77f-5b9ce6af82ee\",
+            \"rule_name\":\"Camera Disconnected\"
+         }";
+
+        let request: CounterRequest = serde_json::from_str(&request_string).unwrap();
+
+        request.to_error_sensor_entry()
+    }
+
     #[test]
     fn entry_test() {
         let entry = get_test_entry(true, "2023-01-08T15:11:45+01:00");
-        assert_eq!(entry.time, 1673187105);
+        assert_eq!(entry.time, 1673187105000);
         assert_eq!(entry.location, "test".to_string());
         assert_eq!(entry.door, "test;back;door".to_string());
         assert_eq!(entry.location, "test".to_string());
@@ -160,5 +202,15 @@ mod tests {
 
         assert!(early.nightowl);
         assert!(late.nightowl);
+    }
+
+    #[test]
+    fn error_test() {
+        let entry = get_test_error("2023-01-08T15:11:45+01:00");
+
+        assert_eq!(entry.error, Some(1673187105000));
+        assert_eq!(entry.location, "test".to_string());
+        assert_eq!(entry.door, "test;back;door".to_string());
+        assert_eq!(entry.location, "test".to_string());
     }
 }

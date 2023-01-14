@@ -8,8 +8,9 @@ name = "sensor_lib"
 path = "src/lib.rs"
 
 [dependencies]
-axum = "0.6.1"
-tokio = { version = "1.24.1", features = ["full"] }
+axum = "0.6"
+tokio = { version = "1", features = ["full"] }
+hyper = "0.14.23"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 async-trait = "0.1"

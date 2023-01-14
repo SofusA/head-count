@@ -1,13 +1,11 @@
-use axum::{routing::post, Router};
+use sensor_lib::app::app;
 use std::net::SocketAddr;
-
-use sensor_lib::handler::count::handler;
 
 #[tokio::main]
 async fn main() {
-    let app = Router::new().route("/count", post(handler));
-
+    let app = app();
     let addr = SocketAddr::from(([127, 0, 0, 1], 1880));
+
     println!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
