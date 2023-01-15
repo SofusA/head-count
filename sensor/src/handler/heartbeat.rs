@@ -1,7 +1,11 @@
-use crate::models::{database::get_database, SensorEntry};
-use axum::{response::IntoResponse, Json};
+use std::sync::Arc;
 
-pub async fn heartbeat_handler(Json(input): Json<SensorEntry>) -> impl IntoResponse {
-    let database = get_database();
-    database.add_sensor_entry(&input).await;
+use crate::{app::AppState, models::SensorEntry};
+use axum::{extract::State, response::IntoResponse, Json};
+
+pub async fn heartbeat_handler(
+    State(state): State<Arc<AppState>>,
+    Json(input): Json<SensorEntry>,
+) -> impl IntoResponse {
+    state.online_database.add_sensor_entry(&input).await;
 }

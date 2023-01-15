@@ -3,7 +3,7 @@ mod tests {
     use std::net::{SocketAddr, TcpListener};
 
     use axum::{body::Body, http::Request};
-    use sensor_lib::{app::app, models::CounterRequest};
+    use sensor_lib::{app::app, database_secret, database_url, models::CounterRequest};
 
     fn get_test_entry() -> CounterRequest {
         let request_string = "{  
@@ -29,7 +29,15 @@ mod tests {
         tokio::spawn(async move {
             axum::Server::from_tcp(listener)
                 .unwrap()
-                .serve(app().into_make_service())
+                .serve(
+                    app(
+                        database_url(),
+                        database_secret(),
+                        "count_test".to_string(),
+                        "sensor".to_string(),
+                    )
+                    .into_make_service(),
+                )
                 .await
                 .unwrap();
         });

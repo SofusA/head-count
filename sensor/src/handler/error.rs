@@ -1,8 +1,12 @@
-use crate::models::{database::get_database, CounterRequest};
-use axum::{response::IntoResponse, Json};
+use std::sync::Arc;
 
-pub async fn error_handler(Json(input): Json<CounterRequest>) -> impl IntoResponse {
+use crate::{app::AppState, models::CounterRequest};
+use axum::{extract::State, response::IntoResponse, Json};
+
+pub async fn error_handler(
+    State(state): State<Arc<AppState>>,
+    Json(input): Json<CounterRequest>,
+) -> impl IntoResponse {
     let entry = input.to_error_sensor_entry();
-    let database = get_database();
-    database.add_sensor_entry(&entry).await;
+    state.online_database.add_sensor_entry(&entry).await;
 }

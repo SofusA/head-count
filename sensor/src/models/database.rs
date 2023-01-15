@@ -1,20 +1,24 @@
 use crate::models::{CounterEntry, SensorEntry};
-use crate::{database_secret, database_url};
 use postgrest::Postgrest;
 
-pub fn get_database() -> Database {
+pub fn get_database(
+    database_url: String,
+    database_secret: String,
+    database_count_table: String,
+    database_sensor_table: String,
+) -> Database {
     Database {
-        url: database_url(),
-        secret: database_secret(),
-        counter_table: "counter".to_string(),
-        sensor_table: "sensor".to_string(),
+        url: database_url,
+        secret: database_secret,
+        count_table: database_count_table,
+        sensor_table: database_sensor_table,
     }
 }
 
 pub struct Database {
     url: String,
     secret: String,
-    pub counter_table: String,
+    pub count_table: String,
     pub sensor_table: String,
 }
 
@@ -32,7 +36,7 @@ impl Database {
         };
 
         let response = client
-            .from("counter")
+            .from(&self.count_table)
             .insert(format!("[{}]", serialised_entry))
             .execute()
             .await;
@@ -52,7 +56,7 @@ impl Database {
         };
 
         client
-            .from("sensor")
+            .from(&self.sensor_table)
             .upsert(format!("[{}]", serialised_entry))
             .execute()
             .await
