@@ -16,11 +16,13 @@ fn get_credentials() -> Credentials {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axum::{body::Body, http::Request};
-    use sensor::{app::app, models::CounterRequest};
+    use sensor::{
+        app::app,
+        models::{CounterEntry, CounterRequest},
+    };
     use std::net::{SocketAddr, TcpListener};
 
-    fn get_test_entry() -> CounterRequest {
+    fn get_test_request() -> CounterRequest {
         let request_string = "{  
             \"channel_id\":\"ddbbe807-8560-4bc7-b04b-4b3b04c69339\",
             \"channel_name\":\"test;back;door\",
@@ -30,13 +32,13 @@ mod tests {
             \"event_type\":\"TripwireCrossed\",
             \"object_id\":9,
             \"rule_id\":\"471fa55d-967b-46a7-b77f-5b9ce6af82ee\",
-            \"rule_name\":\" Enter \"
+            \"rule_name\":\"Enter\"
          }";
 
         serde_json::from_str(request_string).unwrap()
     }
 
-    fn spawn_service_and_get_address() -> SocketAddr {
+    fn spawn_service_and_get_address(endpoint: &str) -> String {
         let listener = TcpListener::bind("127.0.0.1:0".parse::<SocketAddr>().unwrap()).unwrap();
         let addr = listener.local_addr().unwrap();
 
@@ -58,35 +60,40 @@ mod tests {
                 .unwrap();
         });
 
-        addr
+        format!("http://{}/{}", addr, endpoint)
     }
 
     #[tokio::test]
     async fn health_check_test() {
-        let addr = spawn_service_and_get_address();
+        let endpoint = spawn_service_and_get_address("health");
+        let resp: String = reqwest::get(endpoint).await.unwrap().text().await.unwrap();
 
-        let client = hyper::Client::new();
-
-        let response = client
-            .request(
-                Request::builder()
-                    .uri(format!("http://{}/health", addr))
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-
-        let bytes = hyper::body::to_bytes(response.into_body()).await.unwrap();
-        let body = std::str::from_utf8(&bytes).unwrap();
-
-        assert_eq!(body, "All good");
+        assert_eq!(resp, "All good");
     }
 
     #[tokio::test]
-    async fn add_get_delete_test() {
-        let addr = spawn_service_and_get_address();
-        let entry = get_test_entry();
-        assert!(true);
+    async fn smoke_test() {
+        let endpoint = spawn_service_and_get_address("smoke");
+
+        let request = get_test_request();
+        let serialised_request = serde_json::to_string(&request).unwrap();
+
+        let client = reqwest::Client::new();
+        let resp: CounterEntry = client
+            .post(endpoint)
+            .header("Content-Type", "application/json")
+            .body(serialised_request.clone())
+            .send()
+            .await
+            .unwrap()
+            .json()
+            .await
+            .unwrap();
+
+        println!("{:?}", resp);
+
+        let expected_entry = request.to_entry().unwrap();
+
+        assert!(expected_entry == resp);
     }
 }

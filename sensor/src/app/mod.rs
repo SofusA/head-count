@@ -1,12 +1,15 @@
 use std::sync::Arc;
 
 use crate::{
-    handler::{count::count_handler, error::error_handler, heartbeat::heartbeat_handler},
+    handler::{
+        count::count_handler,
+        error::error_handler,
+        health::{health_handler, smoke_handler},
+        heartbeat::heartbeat_handler,
+    },
     models::database::{get_database, Database},
 };
 use axum::{
-    http::StatusCode,
-    response::IntoResponse,
     routing::{get, post},
     Router,
 };
@@ -35,9 +38,6 @@ pub fn app(
         .route("/error", post(error_handler))
         .route("/heartbeat", post(heartbeat_handler))
         .route("/health", get(health_handler))
+        .route("/smoke", post(smoke_handler))
         .with_state(shared_state)
-}
-
-async fn health_handler() -> impl IntoResponse {
-    (StatusCode::OK, "All good")
 }

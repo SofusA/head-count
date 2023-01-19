@@ -27,11 +27,11 @@ pub struct CounterRequest {
 }
 
 impl CounterRequest {
-    pub fn to_entry(&self) -> CounterEntry {
+    pub fn to_entry(&self) -> Result<CounterEntry, &str> {
         let date_time =
             DateTime::parse_from_rfc3339(&self.event_time).expect("Error parsing event time");
 
-        let enter = get_direction(&self.rule_name);
+        let enter = get_direction(&self.rule_name)?;
 
         let direction_in;
         let direction_out;
@@ -47,7 +47,7 @@ impl CounterRequest {
             }
         }
 
-        CounterEntry {
+        Ok(CounterEntry {
             time: date_time.timestamp_millis(),
             door: self.channel_name.clone(),
             location: get_location(&self.channel_name),
@@ -55,7 +55,7 @@ impl CounterRequest {
             direction_out,
             nightowl: is_nightowl(date_time),
             enter,
-        }
+        })
     }
 
     pub fn to_error_sensor_entry(&self) -> SensorEntry {
@@ -105,16 +105,16 @@ fn get_location(channel_name: &str) -> String {
         .to_string()
 }
 
-fn get_direction(rule_name: &str) -> bool {
+fn get_direction(rule_name: &str) -> Result<bool, &str> {
     if rule_name == "Enter" {
-        return true;
+        return Ok(true);
     }
 
     if rule_name == "Exit" {
-        return false;
+        return Ok(false);
     }
 
-    panic!("Invalid rule name in event!")
+    Err("Invalid rule name in event!")
 }
 
 fn is_nightowl(event_time: DateTime<FixedOffset>) -> bool {
@@ -150,7 +150,7 @@ mod tests {
 
         let request: CounterRequest = serde_json::from_str(&request_string).unwrap();
 
-        request.to_entry()
+        request.to_entry().unwrap()
     }
 
     fn get_test_error(time: &str) -> SensorEntry {

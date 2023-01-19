@@ -9,10 +9,15 @@ pub async fn count_handler(
 ) -> impl IntoResponse {
     let entry = input.to_entry();
 
-    match state.online_database.add_counter_entry(&entry).await {
+    let entry_res = match entry {
+        Ok(res) => res,
+        Err(err) => return (StatusCode::BAD_REQUEST, err.to_string()),
+    };
+
+    match state.online_database.add_counter_entry(&entry_res).await {
         Ok(res) => (StatusCode::CREATED, res),
         Err(err) => {
-            store(&entry);
+            store(&entry_res);
             (StatusCode::BAD_REQUEST, err)
         }
     }
