@@ -1,11 +1,41 @@
-use sensor_lib::{app::app, database_secret, database_url};
+use clap::Parser;
+use sensor::{app::app, store::retry_upload::retry_upload};
 use std::net::SocketAddr;
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    #[arg(short, long)]
+    url: String,
+
+    #[arg(short, long)]
+    secret: String,
+
+    #[arg(short, long, default_value_t = false)]
+    retry: bool,
+}
 
 #[tokio::main]
 async fn main() {
+    let args: Args = Args::parse();
+
+    if args.retry {
+        retry_upload(
+            args.url,
+            args.secret,
+            "count".to_string(),
+            "sensor".to_string(),
+        )
+        .await;
+    } else {
+        serve_app(args).await;
+    }
+}
+
+async fn serve_app(args: Args) {
     let app = app(
-        database_url(),
-        database_secret(),
+        args.url,
+        args.secret,
         "count".to_string(),
         "sensor".to_string(),
     );

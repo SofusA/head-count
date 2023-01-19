@@ -1,17 +1,18 @@
-use sensor_lib::{
-    database_secret, database_url,
-    models::database::get_database,
-    store::{delete_entry, read_store},
-};
+use super::read_store;
+use crate::{models::database::get_database, store::delete_entry};
 
-#[tokio::main]
-pub async fn main() {
+pub async fn retry_upload(
+    database_url: String,
+    database_secret: String,
+    database_count_table: String,
+    database_sensor_table: String,
+) {
     let store = read_store();
     let database = get_database(
-        database_url(),
-        database_secret(),
-        "count".to_string(),
-        "sensor".to_string(),
+        database_url,
+        database_secret,
+        database_count_table,
+        database_sensor_table,
     );
 
     for record in store {
