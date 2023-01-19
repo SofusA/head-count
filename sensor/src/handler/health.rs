@@ -1,4 +1,5 @@
 use crate::models::CounterRequest;
+use anyhow::Result;
 use axum::{http::StatusCode, response::IntoResponse, Json};
 
 pub async fn health_handler() -> impl IntoResponse {
@@ -6,10 +7,14 @@ pub async fn health_handler() -> impl IntoResponse {
 }
 
 pub async fn smoke_handler(Json(input): Json<CounterRequest>) -> impl IntoResponse {
-    let entry = input.to_entry();
-
-    match entry {
-        Ok(res) => (StatusCode::OK, res.serialise()),
-        Err(err) => (StatusCode::BAD_REQUEST, err.to_string()),
+    match to_serialised_entry(input) {
+        Ok(res) => res,
+        Err(err) => err.to_string(),
     }
+}
+
+fn to_serialised_entry(request: CounterRequest) -> Result<String> {
+    let entry = request.to_entry()?;
+    let serialised = entry.serialise()?;
+    Ok(serialised)
 }

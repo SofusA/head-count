@@ -1,5 +1,5 @@
 use clap::Parser;
-use sensor::{app::app, store::retry_upload::retry_upload};
+use sensor::{app::app, models::database::Credentials, store::retry_upload::retry_upload};
 use std::net::SocketAddr;
 
 #[derive(Parser, Debug)]
@@ -18,27 +18,22 @@ struct Args {
 #[tokio::main]
 async fn main() {
     let args: Args = Args::parse();
+    let credentials = Credentials {
+        url: args.url,
+        secret: args.secret,
+        count_table: "count".to_string(),
+        sensor_table: "sensor".to_string(),
+    };
 
     if args.retry {
-        retry_upload(
-            args.url,
-            args.secret,
-            "count".to_string(),
-            "sensor".to_string(),
-        )
-        .await;
+        retry_upload(credentials).await;
     } else {
-        serve_app(args).await;
+        serve_app(credentials).await;
     }
 }
 
-async fn serve_app(args: Args) {
-    let app = app(
-        args.url,
-        args.secret,
-        "count".to_string(),
-        "sensor".to_string(),
-    );
+async fn serve_app(credentials: Credentials) {
+    let app = app(credentials);
     let addr = SocketAddr::from(([127, 0, 0, 1], 1880));
 
     println!("listening on {}", addr);

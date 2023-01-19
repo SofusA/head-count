@@ -1,5 +1,6 @@
 pub mod database;
 
+use anyhow::{bail, Result};
 use chrono::{DateTime, FixedOffset, Timelike};
 use serde::{Deserialize, Serialize};
 
@@ -27,9 +28,8 @@ pub struct CounterRequest {
 }
 
 impl CounterRequest {
-    pub fn to_entry(&self) -> Result<CounterEntry, &str> {
-        let date_time =
-            DateTime::parse_from_rfc3339(&self.event_time).expect("Error parsing event time");
+    pub fn to_entry(&self) -> Result<CounterEntry> {
+        let date_time = DateTime::parse_from_rfc3339(&self.event_time)?;
 
         let enter = get_direction(&self.rule_name)?;
 
@@ -50,7 +50,7 @@ impl CounterRequest {
         Ok(CounterEntry {
             time: date_time.timestamp_millis(),
             door: self.channel_name.clone(),
-            location: get_location(&self.channel_name),
+            location: get_location(&self.channel_name)?,
             direction_in,
             direction_out,
             nightowl: is_nightowl(date_time),
@@ -58,16 +58,15 @@ impl CounterRequest {
         })
     }
 
-    pub fn to_error_sensor_entry(&self) -> SensorEntry {
-        let date_time =
-            DateTime::parse_from_rfc3339(&self.event_time).expect("Error parsing event time");
+    pub fn to_error_sensor_entry(&self) -> Result<SensorEntry> {
+        let date_time = DateTime::parse_from_rfc3339(&self.event_time)?;
 
-        SensorEntry {
+        Ok(SensorEntry {
             door: self.channel_name.clone(),
-            location: get_location(&self.channel_name),
+            location: get_location(&self.channel_name)?,
             error: Some(date_time.timestamp_millis()),
             heartbeat: None,
-        }
+        })
     }
 }
 
@@ -83,8 +82,18 @@ pub struct CounterEntry {
 }
 
 impl CounterEntry {
-    pub fn serialise(&self) -> String {
-        serde_json::to_string(self).expect("Unable to serialise CounterEntry")
+    pub fn serialise(&self) -> Result<String> {
+        let serialised = serde_json::to_string(self)?;
+
+        Ok(serialised)
+    }
+}
+
+impl SensorEntry {
+    pub fn serialise(&self) -> Result<String> {
+        let serialised = serde_json::to_string(self)?;
+
+        Ok(serialised)
     }
 }
 
@@ -97,15 +106,14 @@ pub struct SensorEntry {
     pub heartbeat: Option<i64>,
 }
 
-fn get_location(channel_name: &str) -> String {
-    channel_name
-        .split(';')
-        .next()
-        .expect("Location not found")
-        .to_string()
+fn get_location(channel_name: &str) -> Result<String> {
+    match channel_name.split(';').next() {
+        Some(res) => Ok(res.to_string()),
+        None => bail!("Unable to parse location"),
+    }
 }
 
-fn get_direction(rule_name: &str) -> Result<bool, &str> {
+fn get_direction(rule_name: &str) -> Result<bool> {
     if rule_name == "Enter" {
         return Ok(true);
     }
@@ -114,7 +122,7 @@ fn get_direction(rule_name: &str) -> Result<bool, &str> {
         return Ok(false);
     }
 
-    Err("Invalid rule name in event!")
+    bail!("Invalid rule name in event!")
 }
 
 fn is_nightowl(event_time: DateTime<FixedOffset>) -> bool {
@@ -171,7 +179,7 @@ mod tests {
 
         let request: CounterRequest = serde_json::from_str(&request_string).unwrap();
 
-        request.to_error_sensor_entry()
+        request.to_error_sensor_entry().unwrap()
     }
 
     #[test]

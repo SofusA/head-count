@@ -1,24 +1,37 @@
+use anyhow::{bail, Result};
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use std::sync::Arc;
 
-use crate::{app::AppState, models::CounterRequest, store::store};
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
+use crate::{
+    app::AppState,
+    models::{database::Database, CounterEntry, CounterRequest},
+    store::store,
+};
 
-pub async fn count_handler(
+pub async fn add_count(
     State(state): State<Arc<AppState>>,
     Json(input): Json<CounterRequest>,
 ) -> impl IntoResponse {
-    let entry = input.to_entry();
-
-    let entry_res = match entry {
-        Ok(res) => res,
-        Err(err) => return (StatusCode::BAD_REQUEST, err.to_string()),
-    };
-
-    match state.online_database.add_counter_entry(&entry_res).await {
+    match handle_add_count(&state.online_database, input).await {
         Ok(res) => (StatusCode::CREATED, res),
-        Err(err) => {
-            store(&entry_res);
-            (StatusCode::BAD_REQUEST, err)
+        Err(err) => (StatusCode::BAD_REQUEST, err.to_string()),
+    }
+}
+
+async fn handle_online_database(database: &Database, entry: &CounterEntry) -> Result<CounterEntry> {
+    let response = database.add_counter_entry(entry).await?;
+    Ok(response)
+}
+
+async fn handle_add_count(database: &Database, request: CounterRequest) -> Result<String> {
+    let entry = request.to_entry()?;
+    let entry_serialised = entry.serialise()?;
+
+    match handle_online_database(database, &entry).await {
+        Ok(_) => Ok(entry_serialised),
+        Err(_) => {
+            store(&entry);
+            bail!(entry_serialised);
         }
     }
 }

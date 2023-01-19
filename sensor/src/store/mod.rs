@@ -16,7 +16,7 @@ pub fn store(entry: &CounterEntry) {
     let mut file_name = "store/".to_string();
     file_name.push_str(&entry.time.to_string());
 
-    fs::write(file_name, entry.serialise()).expect("Error writing file to store");
+    fs::write(file_name, entry.serialise().unwrap()).expect("Error writing file to store");
 }
 
 pub fn read_store() -> Vec<Record> {
