@@ -2,7 +2,7 @@
 mod tests {
     use sensor::{
         app::app,
-        models::{database::get_credentials, CounterEntry, CounterRequest},
+        models::{database::get_test_credentials, CounterEntry, CounterRequest},
     };
     use std::net::{SocketAddr, TcpListener};
     fn get_endpoint(addr: SocketAddr, endpoint: &str) -> String {
@@ -56,7 +56,7 @@ mod tests {
         let listener = TcpListener::bind("127.0.0.1:0".parse::<SocketAddr>().unwrap()).unwrap();
         let addr = listener.local_addr().unwrap();
 
-        let credentials = get_credentials();
+        let credentials = get_test_credentials();
 
         tokio::spawn(async move {
             axum::Server::from_tcp(listener)

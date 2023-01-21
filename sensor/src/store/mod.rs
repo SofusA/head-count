@@ -58,7 +58,6 @@ mod tests {
             direction_in: 1,
             direction_out: 0,
             nightowl: false,
-            enter: true,
         }
     }
 

@@ -54,7 +54,6 @@ impl CounterRequest {
             direction_in,
             direction_out,
             nightowl: is_nightowl(date_time),
-            enter,
         })
     }
 
@@ -78,7 +77,6 @@ pub struct CounterEntry {
     pub direction_in: i16,
     pub direction_out: i16,
     pub nightowl: bool,
-    pub enter: bool,
 }
 
 impl CounterEntry {
@@ -190,15 +188,12 @@ mod tests {
         assert_eq!(entry.door, "test;back;door".to_string());
         assert_eq!(entry.location, "test".to_string());
         assert!(!entry.nightowl);
-        assert!(entry.enter);
-        assert_eq!(entry.direction_in, 1);
         assert_eq!(entry.direction_out, 0);
     }
 
     #[test]
     fn exit_test() {
         let entry = get_test_entry(false, "2023-01-08T15:11:45+01:00");
-        assert!(!entry.enter);
         assert_eq!(entry.direction_in, 0);
         assert_eq!(entry.direction_out, 1);
     }

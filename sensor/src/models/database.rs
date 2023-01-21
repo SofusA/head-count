@@ -1,8 +1,10 @@
+use std::env;
+
 use crate::models::{CounterEntry, SensorEntry};
-use anyhow::{bail, Result};
-use dotenv_codegen::dotenv;
+use anyhow::{Context, Result};
+use dotenv::dotenv;
 use postgrest::Postgrest;
-use reqwest::{Error, Response};
+use reqwest::Response;
 
 pub fn get_database(credentials: Credentials) -> Database {
     Database {
@@ -27,101 +29,96 @@ impl Database {
         let client = &self.client;
         let serialised_entry = entry.serialise()?;
 
-        let entry: CounterEntry = match client
+        let entries: Vec<CounterEntry> = client
             .from(&self.count_table)
             .insert(format!("[{}]", serialised_entry))
             .execute()
             .await?
             .json()
-            .await
-        {
-            Ok(res) => res,
-            Err(err) => bail!(err),
-        };
+            .await?;
+
+        let entry = entries
+            .first()
+            .context("Unable to parse result from supabase")?
+            .to_owned();
 
         Ok(entry)
     }
 
-    pub async fn delete_count(&self, timestamp_ms: i64) -> Result<Response, Error> {
+    pub async fn delete_count(&self, timestamp_ms: i64) -> Result<Response> {
         let client = &self.client;
 
-        client
+        let response = client
             .from(&self.count_table)
             .eq("time", timestamp_ms.to_string())
             .delete()
             .execute()
-            .await
+            .await?;
+
+        Ok(response)
     }
 
-    pub async fn get_count(&self, timestamp_ms: i64) -> Result<CounterEntry, Error> {
+    pub async fn get_count(&self, timestamp_ms: i64) -> Result<CounterEntry> {
         let client = &self.client;
 
-        let entry: CounterEntry = match client
+        let entries: Vec<CounterEntry> = client
             .from(&self.count_table)
             .eq("time", timestamp_ms.to_string())
             .select("*")
             .execute()
             .await?
             .json()
-            .await
-        {
-            Ok(res) => res,
-            Err(err) => return Err(err),
-        };
+            .await?;
+
+        let entry = entries
+            .first()
+            .context("Unable to parse result from supabase")?
+            .to_owned();
 
         Ok(entry)
     }
 
-    pub async fn add_sensor_entry(&self, entry: &SensorEntry) -> Result<SensorEntry, Error> {
+    pub async fn add_sensor_entry(&self, entry: &SensorEntry) -> Result<SensorEntry> {
         let client = &self.client;
 
-        let serialised_entry = match serde_json::to_string(&entry) {
-            Ok(res) => res,
-            Err(err) => format!("{:?}", err),
-        };
+        let serialised_entry = serde_json::to_string(&entry)?;
 
-        let entry: SensorEntry = match client
+        let entry: SensorEntry = client
             .from(&self.sensor_table)
             .upsert(format!("[{}]", serialised_entry))
             .execute()
             .await?
             .json()
-            .await
-        {
-            Ok(res) => res,
-            Err(err) => return Err(err),
-        };
+            .await?;
 
         Ok(entry)
     }
 
-    pub async fn get_sensor_entries(&self) -> Result<Vec<SensorEntry>, Error> {
+    pub async fn get_sensor_entries(&self) -> Result<Vec<SensorEntry>> {
         let client = &self.client;
 
-        let entries: Vec<SensorEntry> = match client
+        let entries: Vec<SensorEntry> = client
             .from(&self.sensor_table)
             .select("*")
             .execute()
             .await?
             .json()
-            .await
-        {
-            Ok(res) => res,
-            Err(err) => return Err(err),
-        };
+            .await?;
 
         Ok(entries)
     }
 
-    pub async fn delete_sensor_entry(&self, door: String) -> Result<Response, Error> {
+    pub async fn delete_sensor_entry(&self, door: String) -> Result<Response> {
         let client = &self.client;
 
-        client
+        let response = client
             .from(&self.sensor_table)
             .eq("door", door)
             .delete()
             .execute()
-            .await
+            .await?;
+
+        Ok(response)
     }
 }
 
@@ -132,20 +129,47 @@ pub struct Credentials {
     pub sensor_table: String,
 }
 
-pub fn get_credentials() -> Credentials {
-    let url = dotenv!("DATABASE_URL").to_string();
-    let secret = dotenv!("DATABASE_SECRET").to_string();
+pub fn get_test_credentials() -> Credentials {
+    dotenv().ok();
+    let url = env::var("DATABASE_URL").unwrap();
+    let secret = env::var("DATABASE_SECRET").unwrap();
+
+    println!("Credentials: {}, {}", url, secret);
 
     Credentials {
         url,
         secret,
-        count_table: "count_test".to_string(),
+        count_table: "countertest".to_string(),
         sensor_table: "sensor_test".to_string(),
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[tokio::test]
-    async fn database_counter_test() {}
+    async fn database_counter_test() {
+        let credentials = get_test_credentials();
+        let database = get_database(credentials);
+
+        let timestamp = 1893456000000;
+
+        let entry = CounterEntry {
+            time: timestamp,
+            door: "test;testing;test".to_string(),
+            location: "test".to_string(),
+            direction_in: 1,
+            direction_out: 0,
+            nightowl: false,
+        };
+
+        database.add_counter_entry(&entry).await.unwrap();
+
+        let result = database.get_count(timestamp).await.unwrap();
+
+        assert!(result == entry);
+
+        database.delete_count(timestamp).await.unwrap();
+    }
 }
