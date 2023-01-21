@@ -20,6 +20,6 @@ pub async fn error_handler(
 async fn handle_error(database: &Database, request: CounterRequest) -> Result<String> {
     let entry = request.to_error_sensor_entry()?;
 
-    let entry_serialised = database.add_sensor_entry(&entry).await?.serialise()?;
+    let entry_serialised = database.upsert_sensor_entry(&entry).await?.serialise()?;
     Ok(entry_serialised)
 }

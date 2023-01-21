@@ -78,18 +78,23 @@ impl Database {
         Ok(entry)
     }
 
-    pub async fn add_sensor_entry(&self, entry: &SensorEntry) -> Result<SensorEntry> {
+    pub async fn upsert_sensor_entry(&self, entry: &SensorEntry) -> Result<SensorEntry> {
         let client = &self.client;
 
-        let serialised_entry = serde_json::to_string(&entry)?;
+        let serialised_entry = entry.serialise()?;
 
-        let entry: SensorEntry = client
+        let entries: Vec<SensorEntry> = client
             .from(&self.sensor_table)
             .upsert(format!("[{}]", serialised_entry))
             .execute()
             .await?
             .json()
             .await?;
+
+        let entry = entries
+            .first()
+            .context("Unable to parse result from supabase")?
+            .to_owned();
 
         Ok(entry)
     }
@@ -134,12 +139,10 @@ pub fn get_test_credentials() -> Credentials {
     let url = env::var("DATABASE_URL").unwrap();
     let secret = env::var("DATABASE_SECRET").unwrap();
 
-    println!("Credentials: {}, {}", url, secret);
-
     Credentials {
         url,
         secret,
-        count_table: "countertest".to_string(),
+        count_table: "counter_test".to_string(),
         sensor_table: "sensor_test".to_string(),
     }
 }
@@ -171,5 +174,77 @@ mod tests {
         assert!(result == entry);
 
         database.delete_count(timestamp).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn database_sensor_test() {
+        let credentials = get_test_credentials();
+        let database = get_database(credentials);
+
+        let timestamp = 1893456000000;
+
+        let entry = SensorEntry {
+            door: "test;testing;test".to_string(),
+            location: "test".to_string(),
+            heartbeat: Some(timestamp),
+            error: None,
+        };
+
+        database.upsert_sensor_entry(&entry).await.unwrap();
+
+        let result = database.get_sensor_entries().await.unwrap();
+        let result_entry = result
+            .iter()
+            .filter(|x| x.door == entry.door)
+            .last()
+            .unwrap()
+            .to_owned();
+
+        assert!(result_entry == entry);
+
+        database.delete_sensor_entry(entry.door).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn database_upsert_sensor_test() {
+        let credentials = get_test_credentials();
+        let database = get_database(credentials);
+        let door = "test;test".to_string();
+        let location = "test".to_string();
+
+        let first_entry = SensorEntry {
+            door: door.clone(),
+            location: location.clone(),
+            heartbeat: Some(1893456000000),
+            error: None,
+        };
+        database.upsert_sensor_entry(&first_entry).await.unwrap();
+
+        let second_entry = SensorEntry {
+            door: door.clone(),
+            location: location.clone(),
+            heartbeat: None,
+            error: Some(1674328880000),
+        };
+        database.upsert_sensor_entry(&second_entry).await.unwrap();
+
+        let result = database.get_sensor_entries().await.unwrap();
+        let result_entry = result
+            .iter()
+            .filter(|x| x.door == first_entry.door)
+            .last()
+            .unwrap()
+            .to_owned();
+
+        assert!(result_entry.door == first_entry.door && result_entry.door == second_entry.door);
+        assert!(
+            result_entry.location == first_entry.location
+                && result_entry.location == second_entry.location
+        );
+
+        assert_eq!(result_entry.heartbeat, first_entry.heartbeat);
+        assert_eq!(result_entry.error, second_entry.error);
+
+        database.delete_sensor_entry(door).await.unwrap();
     }
 }

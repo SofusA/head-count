@@ -100,7 +100,9 @@ pub struct SensorEntry {
     pub door: String,
     pub location: String,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub heartbeat: Option<i64>,
 }
 

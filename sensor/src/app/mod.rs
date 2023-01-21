@@ -5,7 +5,6 @@ use crate::{
         count::add_count,
         error::error_handler,
         health::{health_handler, smoke_handler},
-        heartbeat::heartbeat_handler,
     },
     models::database::{get_database, Credentials, Database},
 };
@@ -26,7 +25,6 @@ pub fn app(credentials: Credentials) -> Router {
     Router::new()
         .route("/count", post(add_count))
         .route("/error", post(error_handler))
-        .route("/heartbeat", post(heartbeat_handler))
         .route("/health", get(health_handler))
         .route("/smoke", post(smoke_handler))
         .with_state(shared_state)
