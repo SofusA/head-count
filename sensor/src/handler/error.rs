@@ -4,12 +4,12 @@ use std::sync::Arc;
 
 use crate::{
     app::AppState,
-    models::{database::Database, CounterRequest},
+    models::{database::Database, request::Request},
 };
 
 pub async fn error_handler(
     State(state): State<Arc<AppState>>,
-    Json(input): Json<CounterRequest>,
+    Json(input): Json<Request>,
 ) -> impl IntoResponse {
     match handle_error(&state.online_database, input).await {
         Ok(res) => (StatusCode::CREATED, res),
@@ -17,9 +17,11 @@ pub async fn error_handler(
     };
 }
 
-async fn handle_error(database: &Database, request: CounterRequest) -> Result<String> {
-    let entry = request.to_error_sensor_entry()?;
+async fn handle_error(database: &Database, request: Request) -> Result<String> {
+    let entry = request
+        .to_error_heartbeat()?
+        .to_entry(database.sensor_name.clone())?;
 
-    let entry_serialised = database.upsert_sensor_entry(&entry).await?.serialise()?;
+    let entry_serialised = database.upsert_heartbeat(entry).await?.to_string()?;
     Ok(entry_serialised)
 }

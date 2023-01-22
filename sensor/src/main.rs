@@ -1,5 +1,8 @@
 use clap::Parser;
-use sensor::{app::app, models::database::Credentials, store::retry_upload::retry_upload};
+use sensor::{
+    app::{app, heartbeat::start_heartbeat_and_retry},
+    models::database::Credentials,
+};
 use std::net::SocketAddr;
 
 #[derive(Parser, Debug)]
@@ -11,8 +14,8 @@ struct Args {
     #[arg(short, long)]
     secret: String,
 
-    #[arg(short, long, default_value_t = false)]
-    retry: bool,
+    #[arg(short, long)]
+    name: String,
 }
 
 #[tokio::main]
@@ -21,15 +24,13 @@ async fn main() {
     let credentials = Credentials {
         url: args.url,
         secret: args.secret,
-        count_table: "count".to_string(),
+        count_table: "counter".to_string(),
         sensor_table: "sensor".to_string(),
+        sensor_name: args.name,
     };
 
-    if args.retry {
-        retry_upload(credentials).await;
-    } else {
-        serve_app(credentials).await;
-    }
+    serve_app(credentials.clone()).await;
+    start_heartbeat_and_retry(credentials, 60 * 60);
 }
 
 async fn serve_app(credentials: Credentials) {

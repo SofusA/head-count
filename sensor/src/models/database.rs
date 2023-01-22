@@ -1,16 +1,17 @@
-use std::env;
-
-use crate::models::{CounterEntry, SensorEntry};
 use anyhow::{Context, Result};
 use dotenv::dotenv;
 use postgrest::Postgrest;
 use reqwest::Response;
+use std::env;
+
+use super::{count::CountEntry, heartbeat::HeartbeatEntry};
 
 pub fn get_database(credentials: Credentials) -> Database {
     Database {
         client: get_client(credentials.url, credentials.secret),
         count_table: credentials.count_table,
         sensor_table: credentials.sensor_table,
+        sensor_name: credentials.sensor_name,
     }
 }
 
@@ -18,6 +19,7 @@ pub struct Database {
     client: Postgrest,
     pub count_table: String,
     pub sensor_table: String,
+    pub sensor_name: String,
 }
 
 fn get_client(url: String, secret: String) -> Postgrest {
@@ -25,11 +27,11 @@ fn get_client(url: String, secret: String) -> Postgrest {
 }
 
 impl Database {
-    pub async fn add_counter_entry(&self, entry: &CounterEntry) -> Result<CounterEntry> {
+    pub async fn add_counter_entry(&self, entry: CountEntry) -> Result<CountEntry> {
         let client = &self.client;
-        let serialised_entry = entry.serialise()?;
+        let serialised_entry = entry.to_string()?;
 
-        let entries: Vec<CounterEntry> = client
+        let entries: Vec<CountEntry> = client
             .from(&self.count_table)
             .insert(format!("[{}]", serialised_entry))
             .execute()
@@ -58,10 +60,10 @@ impl Database {
         Ok(response)
     }
 
-    pub async fn get_count(&self, timestamp_ms: i64) -> Result<CounterEntry> {
+    pub async fn get_count(&self, timestamp_ms: i64) -> Result<CountEntry> {
         let client = &self.client;
 
-        let entries: Vec<CounterEntry> = client
+        let entries: Vec<CountEntry> = client
             .from(&self.count_table)
             .eq("time", timestamp_ms.to_string())
             .select("*")
@@ -78,12 +80,12 @@ impl Database {
         Ok(entry)
     }
 
-    pub async fn upsert_sensor_entry(&self, entry: &SensorEntry) -> Result<SensorEntry> {
+    pub async fn upsert_heartbeat(&self, entry: HeartbeatEntry) -> Result<HeartbeatEntry> {
         let client = &self.client;
 
-        let serialised_entry = entry.serialise()?;
+        let serialised_entry = entry.to_string()?;
 
-        let entries: Vec<SensorEntry> = client
+        let entries: Vec<HeartbeatEntry> = client
             .from(&self.sensor_table)
             .upsert(format!("[{}]", serialised_entry))
             .execute()
@@ -99,10 +101,10 @@ impl Database {
         Ok(entry)
     }
 
-    pub async fn get_sensor_entries(&self) -> Result<Vec<SensorEntry>> {
+    pub async fn get_sensor_entries(&self) -> Result<Vec<HeartbeatEntry>> {
         let client = &self.client;
 
-        let entries: Vec<SensorEntry> = client
+        let entries: Vec<HeartbeatEntry> = client
             .from(&self.sensor_table)
             .select("*")
             .execute()
@@ -127,11 +129,13 @@ impl Database {
     }
 }
 
+#[derive(Clone)]
 pub struct Credentials {
     pub url: String,
     pub secret: String,
     pub count_table: String,
     pub sensor_table: String,
+    pub sensor_name: String,
 }
 
 pub fn get_test_credentials() -> Credentials {
@@ -144,53 +148,56 @@ pub fn get_test_credentials() -> Credentials {
         secret,
         count_table: "counter_test".to_string(),
         sensor_table: "sensor_test".to_string(),
+        sensor_name: "test;test_sensor".to_string(),
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use chrono::Utc;
+
     use super::*;
 
     #[tokio::test]
     async fn database_counter_test() {
         let credentials = get_test_credentials();
         let database = get_database(credentials);
+        let now = Utc::now();
 
-        let timestamp = 1893456000000;
-
-        let entry = CounterEntry {
-            time: timestamp,
-            door: "test;testing;test".to_string(),
+        let expected_entry = CountEntry {
+            time: now.timestamp_millis(),
+            door: "test;testing".to_string(),
             location: "test".to_string(),
             direction_in: 1,
             direction_out: 0,
-            nightowl: false,
+            nightowl: true,
         };
 
-        database.add_counter_entry(&entry).await.unwrap();
+        database
+            .add_counter_entry(expected_entry.clone())
+            .await
+            .unwrap();
 
-        let result = database.get_count(timestamp).await.unwrap();
+        let result = database.get_count(expected_entry.time).await.unwrap();
+        assert!(result == expected_entry);
 
-        assert!(result == entry);
-
-        database.delete_count(timestamp).await.unwrap();
+        database.delete_count(expected_entry.time).await.unwrap();
     }
 
     #[tokio::test]
     async fn database_sensor_test() {
         let credentials = get_test_credentials();
         let database = get_database(credentials);
+        let now = Utc::now();
 
-        let timestamp = 1893456000000;
-
-        let entry = SensorEntry {
-            door: "test;testing;test".to_string(),
+        let entry = HeartbeatEntry {
+            door: "test:testing".to_string(),
             location: "test".to_string(),
-            heartbeat: Some(timestamp),
-            error: None,
+            error: Some(now.timestamp_millis()),
+            heartbeat: Some(now.timestamp_millis()),
         };
 
-        database.upsert_sensor_entry(&entry).await.unwrap();
+        database.upsert_heartbeat(entry.clone()).await.unwrap();
 
         let result = database.get_sensor_entries().await.unwrap();
         let result_entry = result
@@ -209,24 +216,32 @@ mod tests {
     async fn database_upsert_sensor_test() {
         let credentials = get_test_credentials();
         let database = get_database(credentials);
-        let door = "test;test".to_string();
+        let door = "test;testing".to_string();
         let location = "test".to_string();
 
-        let first_entry = SensorEntry {
+        let now = Utc::now();
+
+        let first_entry = HeartbeatEntry {
             door: door.clone(),
             location: location.clone(),
-            heartbeat: Some(1893456000000),
+            heartbeat: Some(now.timestamp_millis()),
             error: None,
         };
-        database.upsert_sensor_entry(&first_entry).await.unwrap();
+        database
+            .upsert_heartbeat(first_entry.clone())
+            .await
+            .unwrap();
 
-        let second_entry = SensorEntry {
+        let second_entry = HeartbeatEntry {
             door: door.clone(),
             location: location.clone(),
             heartbeat: None,
-            error: Some(1674328880000),
+            error: Some(now.timestamp_millis() + 1000),
         };
-        database.upsert_sensor_entry(&second_entry).await.unwrap();
+        database
+            .upsert_heartbeat(second_entry.clone())
+            .await
+            .unwrap();
 
         let result = database.get_sensor_entries().await.unwrap();
         let result_entry = result

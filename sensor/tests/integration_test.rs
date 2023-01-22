@@ -2,7 +2,7 @@
 mod tests {
     use sensor::{
         app::app,
-        models::{database::get_test_credentials, CounterEntry, CounterRequest},
+        models::{count::Count, database::get_test_credentials, request::Request},
     };
     use std::net::{SocketAddr, TcpListener};
     fn get_endpoint(addr: SocketAddr, endpoint: &str) -> String {
@@ -18,7 +18,7 @@ mod tests {
         let serialised_request = serde_json::to_string(&request).unwrap();
 
         let client = reqwest::Client::new();
-        let resp: CounterEntry = client
+        let response_count: Count = client
             .post(endpoint)
             .header("Content-Type", "application/json")
             .body(serialised_request.clone())
@@ -29,14 +29,12 @@ mod tests {
             .await
             .unwrap();
 
-        println!("{:?}", resp);
+        let expected_count = request.to_count().unwrap();
 
-        let expected_entry = request.to_entry().unwrap();
-
-        assert!(expected_entry == resp);
+        assert_eq!(expected_count, response_count);
     }
 
-    fn get_test_request() -> CounterRequest {
+    fn get_test_request() -> Request {
         let request_string = "{  
             \"channel_id\":\"ddbbe807-8560-4bc7-b04b-4b3b04c69339\",
             \"channel_name\":\"test;back;door\",

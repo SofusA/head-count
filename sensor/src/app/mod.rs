@@ -1,3 +1,4 @@
+pub mod heartbeat;
 use std::sync::Arc;
 
 use crate::{

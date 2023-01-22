@@ -3,20 +3,20 @@ pub mod retry_upload;
 use std::fs;
 use std::path::PathBuf;
 
-use crate::models::CounterEntry;
+use crate::models::count::CountEntry;
 
 pub struct Record {
     pub path: PathBuf,
-    pub entry: CounterEntry,
+    pub entry: CountEntry,
 }
 
-pub fn store(entry: &CounterEntry) {
+pub fn store(entry: CountEntry) {
     fs::create_dir_all("store").expect("Unable to create store directory");
 
     let mut file_name = "store/".to_string();
     file_name.push_str(&entry.time.to_string());
 
-    fs::write(file_name, entry.serialise().unwrap()).expect("Error writing file to store");
+    fs::write(file_name, entry.to_string().unwrap()).expect("Error writing file to store");
 }
 
 pub fn read_store() -> Vec<Record> {
@@ -30,7 +30,7 @@ pub fn read_store() -> Vec<Record> {
         let record_content =
             fs::read_to_string(read_record.path()).expect("Unable to read content of record");
 
-        let entry: CounterEntry =
+        let entry: CountEntry =
             serde_json::from_str(&record_content).expect("Unable to deserialise record");
 
         store.push(Record {
@@ -50,8 +50,8 @@ pub fn delete_entry(path: PathBuf) {
 mod tests {
     use super::*;
 
-    fn get_entry() -> CounterEntry {
-        CounterEntry {
+    fn get_entry() -> CountEntry {
+        CountEntry {
             time: 123,
             door: "test;door".to_owned(),
             location: "test".to_owned(),
@@ -64,7 +64,7 @@ mod tests {
     #[test]
     fn store_and_read_test() {
         let expected_entry = get_entry();
-        store(&expected_entry);
+        store(expected_entry.clone());
 
         let store = read_store();
         let record = store.into_iter().last().unwrap();
