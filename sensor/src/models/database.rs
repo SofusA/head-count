@@ -1,8 +1,6 @@
 use anyhow::{Context, Result};
-use dotenv::dotenv;
 use postgrest::Postgrest;
 use reqwest::Response;
-use std::env;
 
 use super::{count::CountEntry, heartbeat::HeartbeatEntry};
 
@@ -74,7 +72,10 @@ impl Database {
 
         let entry = entries
             .first()
-            .context("Unable to parse result from supabase")?
+            .context(format!(
+                "Unable to parse result from supabase: {:?}",
+                entries
+            ))?
             .to_owned();
 
         Ok(entry)
@@ -138,25 +139,27 @@ pub struct Credentials {
     pub sensor_name: String,
 }
 
-pub fn get_test_credentials() -> Credentials {
-    dotenv().ok();
-    let url = env::var("DATABASE_URL").unwrap();
-    let secret = env::var("DATABASE_SECRET").unwrap();
-
-    Credentials {
-        url,
-        secret,
-        count_table: "counter_test".to_string(),
-        sensor_table: "sensor_test".to_string(),
-        sensor_name: "test;test_sensor".to_string(),
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use chrono::Utc;
+    use dotenv::dotenv;
+    use std::env;
 
     use super::*;
+
+    fn get_test_credentials() -> Credentials {
+        dotenv().ok();
+        let url = env::var("DATABASE_URL").unwrap();
+        let secret = env::var("DATABASE_SECRET").unwrap();
+
+        Credentials {
+            url,
+            secret,
+            count_table: "counter_test".to_string(),
+            sensor_table: "sensor_test".to_string(),
+            sensor_name: "test;test_sensor".to_string(),
+        }
+    }
 
     #[tokio::test]
     async fn database_counter_test() {

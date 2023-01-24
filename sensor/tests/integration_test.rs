@@ -1,16 +1,18 @@
 #[cfg(test)]
 mod tests {
     use chrono::Utc;
+    use dotenv::dotenv;
     use sensor::{
         app::app,
         handler::count::handle_add_count,
         models::{
             count::{Count, CountEntry},
-            database::{get_database, get_test_credentials, Credentials},
+            database::{get_database, Credentials},
             request::Request,
         },
         store::{delete_record, read_store, retry_upload::retry_upload, store},
     };
+    use std::env;
     use std::{
         net::{SocketAddr, TcpListener},
         time::Duration,
@@ -18,6 +20,20 @@ mod tests {
 
     fn get_endpoint(addr: SocketAddr, endpoint: &str) -> String {
         format!("http://{}/{}", addr, endpoint)
+    }
+
+    fn get_test_credentials() -> Credentials {
+        dotenv().ok();
+        let url = env::var("DATABASE_URL").unwrap();
+        let secret = env::var("DATABASE_SECRET").unwrap();
+
+        Credentials {
+            url,
+            secret,
+            count_table: "counter_test".to_string(),
+            sensor_table: "sensor_test".to_string(),
+            sensor_name: "test;test_sensor".to_string(),
+        }
     }
 
     #[tokio::test]
@@ -62,10 +78,10 @@ mod tests {
             nightowl: false,
         };
 
-        store(entry.clone());
+        store(entry.clone()).unwrap();
         tokio::time::sleep(Duration::new(0, 5000)).await;
-
         retry_upload(&database).await;
+        tokio::time::sleep(Duration::new(0, 5000)).await;
 
         let result = database.get_count(now).await.unwrap();
 

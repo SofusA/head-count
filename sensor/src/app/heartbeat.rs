@@ -29,9 +29,10 @@ async fn handle_heartbeat(credentials: Credentials, interval_secs: u64) {
             heartbeat: Some(timestamp),
             error: None,
         };
-        let entry = heartbeat
-            .to_entry(sensor_name.clone())
-            .expect("Unable to create new heartbeat");
+        let entry = match heartbeat.to_entry(sensor_name.clone()) {
+            Ok(res) => res,
+            Err(_) => return,
+        };
 
         match database.upsert_heartbeat(entry).await {
             Ok(_) => println!("Send heartbeat"),

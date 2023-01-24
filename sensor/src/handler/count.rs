@@ -27,7 +27,7 @@ pub async fn handle_add_count(database: &Database, request: Request) -> Result<S
     match handle_online_database(database, entry.clone()).await {
         Ok(_) => Ok(count_serialised),
         Err(_) => {
-            store(entry);
+            store(entry)?;
             bail!(count_serialised);
         }
     }
