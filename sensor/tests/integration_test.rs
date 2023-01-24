@@ -3,14 +3,14 @@ mod tests {
     use chrono::Utc;
     use dotenv::dotenv;
     use sensor::{
-        app::app,
+        app::{app, heartbeat::start_heartbeat_and_retry},
         handler::count::handle_add_count,
         models::{
             count::{Count, CountEntry},
             database::{get_database, Credentials},
             request::Request,
         },
-        store::{delete_record, read_store, retry_upload::retry_upload, store},
+        store::{delete_record, read_store, store},
     };
     use std::env;
     use std::{
@@ -67,11 +67,12 @@ mod tests {
     async fn retry_test() {
         let now = Utc::now().timestamp_millis();
         let credentials = get_test_credentials();
-        let database = get_database(credentials);
+        let database = get_database(credentials.clone());
+        let sensor_name = credentials.sensor_name.clone();
 
         let entry = CountEntry {
             time: now,
-            door: "test;testing".to_string(),
+            door: sensor_name.clone(),
             location: "test".to_string(),
             direction_in: 1,
             direction_out: 0,
@@ -80,14 +81,18 @@ mod tests {
 
         store(entry.clone()).unwrap();
         tokio::time::sleep(Duration::new(0, 5000)).await;
-        retry_upload(&database).await;
-        tokio::time::sleep(Duration::new(0, 5000)).await;
+
+        start_heartbeat_and_retry(credentials, 1);
+
+        tokio::time::sleep(Duration::new(1, 0)).await;
 
         let result = database.get_count(now).await.unwrap();
-
         database.delete_count(now).await.unwrap();
-
         assert_eq!(entry, result);
+
+        let heartbeats = database.get_sensor_entries().await.unwrap();
+        let heartbeat = heartbeats.iter().find(|x| x.door == sensor_name).unwrap();
+        assert!(heartbeat.heartbeat.unwrap() > now);
     }
 
     #[tokio::test]
@@ -105,9 +110,11 @@ mod tests {
         let request = get_test_request(time);
         let entry = request.to_count().unwrap();
         match handle_add_count(&bad_database, request).await {
-            Ok(_) => println!("This should fail, but it did not"),
+            Ok(_) => panic!("This should fail, but it did not"),
             Err(_) => println!("This failed as it shoud"),
         };
+
+        tokio::time::sleep(Duration::new(0, 5000)).await;
 
         let store = read_store();
         let store_result = store
