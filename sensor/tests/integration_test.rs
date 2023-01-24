@@ -11,17 +11,23 @@ mod tests {
         },
         store::{delete_record, read_store, retry_upload::retry_upload, store},
     };
-    use std::net::{SocketAddr, TcpListener};
+    use std::{
+        net::{SocketAddr, TcpListener},
+        time::Duration,
+    };
+
     fn get_endpoint(addr: SocketAddr, endpoint: &str) -> String {
         format!("http://{}/{}", addr, endpoint)
     }
 
     #[tokio::test]
     async fn smoke_test() {
-        let addr = spawn_service_and_get_address();
+        let credentials = get_test_credentials();
+        let addr = spawn_service_and_get_address(credentials);
         let endpoint = get_endpoint(addr, "smoke");
 
-        let request = get_test_request();
+        let time = "2050-01-01T18:10:00+01:00".to_string();
+        let request = get_test_request(time);
         let serialised_request = serde_json::to_string(&request).unwrap();
 
         let client = reqwest::Client::new();
@@ -57,6 +63,8 @@ mod tests {
         };
 
         store(entry.clone());
+        tokio::time::sleep(Duration::new(0, 5000)).await;
+
         retry_upload(&database).await;
 
         let result = database.get_count(now).await.unwrap();
@@ -77,7 +85,8 @@ mod tests {
         };
         let bad_database = get_database(bad_credentials);
 
-        let request = get_test_request();
+        let time = "2050-01-01T18:00:00+01:00".to_string();
+        let request = get_test_request(time);
         let entry = request.to_count().unwrap();
         match handle_add_count(&bad_database, request).await {
             Ok(_) => println!("This should fail, but it did not"),
@@ -85,33 +94,38 @@ mod tests {
         };
 
         let store = read_store();
-        let store_result = store.first().unwrap();
+        let store_result = store
+            .iter()
+            .filter(|x| x.entry.time == entry.timestamp)
+            .last()
+            .unwrap();
         delete_record(store_result.path.clone());
 
         assert_eq!(entry, store_result.entry.to_count());
     }
 
-    fn get_test_request() -> Request {
+    fn get_test_request(time: String) -> Request {
         let request_string = "{  
             \"channel_id\":\"ddbbe807-8560-4bc7-b04b-4b3b04c69339\",
             \"channel_name\":\"test;back;door\",
             \"event_name\":\"Crossed line\",
             \"event_origin\":\"Pedestrian\",
-            \"event_time\":\"2050-01-01T15:00:00+01:00\",
+            \"event_time\":\""
+            .to_owned()
+            + &time
+            + "\",
             \"event_type\":\"TripwireCrossed\",
             \"object_id\":9,
             \"rule_id\":\"471fa55d-967b-46a7-b77f-5b9ce6af82ee\",
             \"rule_name\":\"Enter\"
          }";
 
-        serde_json::from_str(request_string).unwrap()
+        serde_json::from_str(&request_string).unwrap()
     }
 
-    fn spawn_service_and_get_address() -> SocketAddr {
+    fn spawn_service_and_get_address(credentials: Credentials) -> SocketAddr {
         let listener = TcpListener::bind("127.0.0.1:0".parse::<SocketAddr>().unwrap()).unwrap();
         let addr = listener.local_addr().unwrap();
-
-        let credentials = get_test_credentials();
 
         tokio::spawn(async move {
             axum::Server::from_tcp(listener)
