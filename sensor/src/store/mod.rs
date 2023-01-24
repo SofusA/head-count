@@ -42,7 +42,7 @@ pub fn read_store() -> Vec<Record> {
     store
 }
 
-pub fn delete_entry(path: PathBuf) {
+pub fn delete_record(path: PathBuf) {
     fs::remove_file(path).expect("Unable to delete file after success")
 }
 
@@ -71,7 +71,7 @@ mod tests {
 
         assert!(expected_entry.time == record.entry.time);
 
-        delete_entry(record.path);
+        delete_record(record.path);
         let empty_store = read_store();
 
         assert!(empty_store.is_empty());

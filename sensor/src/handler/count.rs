@@ -18,12 +18,7 @@ pub async fn add_count(
     }
 }
 
-async fn handle_online_database(database: &Database, entry: CountEntry) -> Result<CountEntry> {
-    let response = database.add_counter_entry(entry).await?;
-    Ok(response)
-}
-
-async fn handle_add_count(database: &Database, request: Request) -> Result<String> {
+pub async fn handle_add_count(database: &Database, request: Request) -> Result<String> {
     let count = request.to_count()?;
     let count_serialised = count.to_string()?;
     let sensor_name = database.sensor_name.clone();
@@ -36,4 +31,9 @@ async fn handle_add_count(database: &Database, request: Request) -> Result<Strin
             bail!(count_serialised);
         }
     }
+}
+
+async fn handle_online_database(database: &Database, entry: CountEntry) -> Result<CountEntry> {
+    let response = database.add_counter_entry(entry).await?;
+    Ok(response)
 }

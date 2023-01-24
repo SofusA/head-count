@@ -1,8 +1,15 @@
 #[cfg(test)]
 mod tests {
+    use chrono::Utc;
     use sensor::{
         app::app,
-        models::{count::Count, database::get_test_credentials, request::Request},
+        handler::count::handle_add_count,
+        models::{
+            count::{Count, CountEntry},
+            database::{get_database, get_test_credentials, Credentials},
+            request::Request,
+        },
+        store::{delete_record, read_store, retry_upload::retry_upload, store},
     };
     use std::net::{SocketAddr, TcpListener};
     fn get_endpoint(addr: SocketAddr, endpoint: &str) -> String {
@@ -32,6 +39,56 @@ mod tests {
         let expected_count = request.to_count().unwrap();
 
         assert_eq!(expected_count, response_count);
+    }
+
+    #[tokio::test]
+    async fn retry_test() {
+        let now = Utc::now().timestamp_millis();
+        let credentials = get_test_credentials();
+        let database = get_database(credentials);
+
+        let entry = CountEntry {
+            time: now,
+            door: "test;testing".to_string(),
+            location: "test".to_string(),
+            direction_in: 1,
+            direction_out: 0,
+            nightowl: false,
+        };
+
+        store(entry.clone());
+        retry_upload(&database).await;
+
+        let result = database.get_count(now).await.unwrap();
+
+        database.delete_count(now).await.unwrap();
+
+        assert_eq!(entry, result);
+    }
+
+    #[tokio::test]
+    async fn store_test() {
+        let bad_credentials = Credentials {
+            url: "test.com/api/v1".to_string(),
+            secret: "supersecret".to_string(),
+            count_table: "count".to_string(),
+            sensor_table: "sensor".to_string(),
+            sensor_name: "test;testing".to_string(),
+        };
+        let bad_database = get_database(bad_credentials);
+
+        let request = get_test_request();
+        let entry = request.to_count().unwrap();
+        match handle_add_count(&bad_database, request).await {
+            Ok(_) => println!("This should fail, but it did not"),
+            Err(_) => println!("This failed as it shoud"),
+        };
+
+        let store = read_store();
+        let store_result = store.first().unwrap();
+        delete_record(store_result.path.clone());
+
+        assert_eq!(entry, store_result.entry.to_count());
     }
 
     fn get_test_request() -> Request {

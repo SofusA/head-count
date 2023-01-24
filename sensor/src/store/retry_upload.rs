@@ -1,5 +1,5 @@
 use super::read_store;
-use crate::{models::database::Database, store::delete_entry};
+use crate::{models::database::Database, store::delete_record};
 
 pub async fn retry_upload(database: &Database) {
     let store = read_store();
@@ -8,7 +8,7 @@ pub async fn retry_upload(database: &Database) {
         match database.add_counter_entry(record.entry).await {
             Ok(_) => {
                 println!("Successfully re-tried upload");
-                delete_entry(record.path);
+                delete_record(record.path);
             }
             Err(_) => println!("Error"),
         }
