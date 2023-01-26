@@ -1,12 +1,8 @@
 name: Test and release
 
 on:
-  push:
-  workflow_dispatch:
-
-permissions:
-    id-token: write
-    contents: read
+  release:
+    types: [created]
 
 jobs:
   test:
@@ -14,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup | Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup | Rust toolchain
         uses: actions-rs/toolchain@v1
@@ -25,7 +21,7 @@ jobs:
 
       - id: cargo-cache
         name: Cache
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
         with:
           key: test
 
@@ -41,6 +37,7 @@ jobs:
     name: release ${{ matrix.target }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         target: [x86_64-pc-windows-gnu, x86_64-unknown-linux-musl]
     steps:
