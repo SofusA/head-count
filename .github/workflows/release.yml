@@ -43,9 +43,9 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Compile and release
-        working-directory: ./sensor
         uses: rust-build/rust-build.action@v1.4.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           RUSTTARGET: ${{ matrix.target }}
+          SRC_DIR: ./sensor  
