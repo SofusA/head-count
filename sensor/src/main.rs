@@ -35,7 +35,7 @@ async fn main() {
 
 async fn serve_app(credentials: Credentials) {
     let app = app(credentials);
-    let addr = SocketAddr::from(([127, 0, 0, 1], 1880));
+    let addr = SocketAddr::from(([127, 0, 0, 1], 4200));
 
     match axum::Server::bind(&addr)
         .serve(app.into_make_service())
