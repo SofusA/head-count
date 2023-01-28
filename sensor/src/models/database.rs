@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use postgrest::Postgrest;
 use reqwest::Response;
 
@@ -21,7 +21,9 @@ pub struct Database {
 }
 
 fn get_client(url: String, secret: String) -> Postgrest {
-    Postgrest::new(url).insert_header("apikey", secret)
+    Postgrest::new(url)
+        .insert_header("apikey", &secret)
+        .insert_header("Authorization", format!("Bearer {}", &secret))
 }
 
 impl Database {
@@ -29,13 +31,23 @@ impl Database {
         let client = &self.client;
         let serialised_entry = entry.to_string()?;
 
-        let entries: Vec<CountEntry> = client
+        let result = client
             .from(&self.count_table)
             .insert(format!("[{}]", serialised_entry))
             .execute()
             .await?
-            .json()
+            .text()
             .await?;
+
+        let entries: Vec<CountEntry> = match serde_json::from_str(&result) {
+            Ok(res) => res,
+            Err(err) => {
+                bail!(format!(
+                    "Error in decoding message: {}, caused by: {}",
+                    err, result
+                ))
+            }
+        };
 
         let entry = entries
             .first()
@@ -61,14 +73,24 @@ impl Database {
     pub async fn get_count(&self, timestamp_ms: i64) -> Result<CountEntry> {
         let client = &self.client;
 
-        let entries: Vec<CountEntry> = client
+        let result = client
             .from(&self.count_table)
             .eq("time", timestamp_ms.to_string())
             .select("*")
             .execute()
             .await?
-            .json()
+            .text()
             .await?;
+
+        let entries: Vec<CountEntry> = match serde_json::from_str(&result) {
+            Ok(res) => res,
+            Err(err) => {
+                bail!(format!(
+                    "Error in decoding message: {}, caused by: {}",
+                    err, result
+                ))
+            }
+        };
 
         let entry = entries
             .first()
@@ -86,13 +108,23 @@ impl Database {
 
         let serialised_entry = entry.to_string()?;
 
-        let entries: Vec<HeartbeatEntry> = client
+        let result = client
             .from(&self.sensor_table)
             .upsert(format!("[{}]", serialised_entry))
             .execute()
             .await?
-            .json()
+            .text()
             .await?;
+
+        let entries: Vec<HeartbeatEntry> = match serde_json::from_str(&result) {
+            Ok(res) => res,
+            Err(err) => {
+                bail!(format!(
+                    "Error in decoding message: {}, caused by: {}",
+                    err, result
+                ))
+            }
+        };
 
         let entry = entries
             .first()
@@ -105,13 +137,23 @@ impl Database {
     pub async fn get_sensor_entries(&self) -> Result<Vec<HeartbeatEntry>> {
         let client = &self.client;
 
-        let entries: Vec<HeartbeatEntry> = client
+        let result = client
             .from(&self.sensor_table)
             .select("*")
             .execute()
             .await?
-            .json()
+            .text()
             .await?;
+
+        let entries: Vec<HeartbeatEntry> = match serde_json::from_str(&result) {
+            Ok(res) => res,
+            Err(err) => {
+                bail!(format!(
+                    "Error in decoding message: {}, caused by: {}",
+                    err, result
+                ))
+            }
+        };
 
         Ok(entries)
     }

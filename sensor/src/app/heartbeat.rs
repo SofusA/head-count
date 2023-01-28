@@ -36,7 +36,7 @@ async fn handle_heartbeat(credentials: Credentials, interval_secs: u64) {
 
         match database.upsert_heartbeat(entry).await {
             Ok(_) => println!("Send heartbeat"),
-            Err(err) => todo!("Error sending heartbeat: {}", err),
+            Err(err) => println!("Error sending heartbeat: {}", err),
         };
 
         retry_upload(&database).await;

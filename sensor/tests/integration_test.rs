@@ -92,6 +92,7 @@ mod tests {
 
         let heartbeats = database.get_sensor_entries().await.unwrap();
         let heartbeat = heartbeats.iter().find(|x| x.door == sensor_name).unwrap();
+        database.delete_sensor_entry(sensor_name).await.unwrap();
         assert!(heartbeat.heartbeat.unwrap() > now);
     }
 

@@ -37,11 +37,13 @@ async fn serve_app(credentials: Credentials) {
     let app = app(credentials);
     let addr = SocketAddr::from(([127, 0, 0, 1], 4200));
 
+    println!("listening on {}", addr);
+
     match axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
     {
-        Ok(_) => println!("listening on {}", addr),
+        Ok(_) => println!("Running"),
         Err(err) => panic!("Unable to start server: {}", err),
     }
 }
