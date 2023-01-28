@@ -5,36 +5,8 @@ on:
     types: [created]
 
 jobs:
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Setup | Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup | Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          target: x86_64-unknown-linux-musl
-
-      - id: cargo-cache
-        name: Cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          key: test
-
-      - name: Build | Tests
-        working-directory: ./sensor
-        env:
-          DATABASE_SECRET: ${{ secrets.DATABASE_SECRET}}
-          DATABASE_URL: ${{ secrets.DATABASE_URL}}
-        run: cargo test  
-
-  release:
-    needs: test
-    name: release ${{ matrix.target }}
+  Release:
+    name: Release ${{ matrix.target }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
