@@ -1,12 +1,12 @@
-name: Test and release
+name: Compile and release
 
 on:
   release:
     types: [created]
 
 jobs:
-  Release:
-    name: Release ${{ matrix.target }}
+  Build:
+    name: Compile ${{ matrix.target }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
