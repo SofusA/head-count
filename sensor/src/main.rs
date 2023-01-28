@@ -29,8 +29,8 @@ async fn main() {
         sensor_name: args.name,
     };
 
-    serve_app(credentials.clone()).await;
-    start_heartbeat_and_retry(credentials, 60 * 60);
+    start_heartbeat_and_retry(credentials.clone(), 60 * 60);
+    serve_app(credentials).await;
 }
 
 async fn serve_app(credentials: Credentials) {
@@ -43,7 +43,7 @@ async fn serve_app(credentials: Credentials) {
         .serve(app.into_make_service())
         .await
     {
-        Ok(_) => println!("Running"),
+        Ok(_) => (),
         Err(err) => panic!("Unable to start server: {}", err),
     }
 }

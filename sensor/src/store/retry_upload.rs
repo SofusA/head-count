@@ -7,7 +7,6 @@ pub async fn retry_upload(database: &Database) {
     for record in store {
         match database.add_counter_entry(record.entry).await {
             Ok(_) => {
-                println!("Successfully re-tried upload");
                 delete_record(record.path);
             }
             Err(_) => println!("Error"),
