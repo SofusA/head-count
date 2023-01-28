@@ -1,0 +1,27 @@
+name: Test
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup | Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup | Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          target: x86_64-unknown-linux-musl
+
+      - name: Build | Tests
+        working-directory: ./sensor
+        env:
+          DATABASE_SECRET: ${{ secrets.DATABASE_SECRET}}
+          DATABASE_URL: ${{ secrets.DATABASE_URL}}
+        run: cargo test  
