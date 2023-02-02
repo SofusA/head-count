@@ -12,9 +12,17 @@ pub async fn add_count(
     State(state): State<Arc<AppState>>,
     Json(input): Json<Request>,
 ) -> impl IntoResponse {
+    println!("Recieved: {:?}", input);
+
     match handle_add_count(&state.online_database, input).await {
-        Ok(res) => (StatusCode::CREATED, res),
-        Err(err) => (StatusCode::BAD_REQUEST, err.to_string()),
+        Ok(res) => {
+            println!("Success");
+            (StatusCode::CREATED, res)
+        }
+        Err(err) => {
+            println!("Error: {}", err);
+            (StatusCode::BAD_REQUEST, err.to_string())
+        }
     }
 }
 

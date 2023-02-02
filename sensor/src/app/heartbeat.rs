@@ -31,11 +31,14 @@ async fn handle_heartbeat(credentials: Credentials, interval_secs: u64) {
         };
         let entry = match heartbeat.to_entry(sensor_name.clone()) {
             Ok(res) => res,
-            Err(_) => return,
+            Err(err) => {
+                println!("Error sending heartbeat: {}", err);
+                return;
+            }
         };
 
         match database.upsert_heartbeat(entry).await {
-            Ok(_) => (),
+            Ok(_) => println!("Heartbeat successfully sent"),
             Err(err) => println!("Error sending heartbeat: {}", err),
         };
 
