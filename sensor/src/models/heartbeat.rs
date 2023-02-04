@@ -1,4 +1,5 @@
 use anyhow::Result;
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
 use super::get_location;
@@ -52,5 +53,38 @@ impl Heartbeat {
     pub fn to_string(&self) -> Result<String> {
         let serialised = serde_json::to_string(self)?;
         Ok(serialised)
+    }
+
+    pub fn newer_than_days(&self, days: i64) -> bool {
+        let now = Utc::now().timestamp_millis();
+        match self.heartbeat {
+            Some(heartbeat) => heartbeat > now - days * 86400000,
+            None => false,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Duration;
+
+    #[test]
+    fn is_newer_than_days_test() {
+        let time = Utc::now() - Duration::days(3);
+
+        let heartbeat = Heartbeat {
+            error: None,
+            heartbeat: Some(time.timestamp_millis()),
+        };
+
+        let heartbeat_with_none = Heartbeat {
+            error: None,
+            heartbeat: Some(time.timestamp_millis()),
+        };
+
+        assert!(!heartbeat.newer_than_days(1));
+        assert!(heartbeat.newer_than_days(4));
+        assert!(!heartbeat_with_none.newer_than_days(0))
     }
 }

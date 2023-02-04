@@ -1,4 +1,5 @@
 use anyhow::Result;
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
 use super::get_location;
@@ -52,13 +53,20 @@ impl Count {
     pub fn to_string(&self) -> Result<String> {
         Ok(serde_json::to_string(self)?)
     }
+
+    pub fn newer_than_days(&self, days: i64) -> bool {
+        let now = Utc::now().timestamp_millis();
+
+        self.timestamp > now - days * 86400000
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::models::request::Request;
+    use chrono::Duration;
 
     use super::*;
+    use crate::models::request::Request;
 
     fn get_test_count(enter: bool, time: &str) -> Count {
         let rule_name = match enter {
@@ -103,5 +111,14 @@ mod tests {
 
         assert!(early.nightowl);
         assert!(late.nightowl);
+    }
+
+    #[test]
+    fn is_newer_than_days_test() {
+        let time = Utc::now() - Duration::days(3);
+        let count = get_test_count(true, &time.to_rfc3339());
+
+        assert!(!count.newer_than_days(1));
+        assert!(count.newer_than_days(4));
     }
 }

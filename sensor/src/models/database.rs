@@ -158,6 +158,40 @@ impl Database {
         Ok(entries)
     }
 
+    pub async fn get_latest_count_entries(&self) -> Result<Vec<CountEntry>> {
+        let client = &self.client;
+        let mut latest_count_entries: Vec<CountEntry> = Vec::new();
+
+        let sensors = self.get_sensor_entries().await?;
+
+        for sensor in sensors {
+            let result = client
+                .from(&self.count_table)
+                .select("*")
+                .eq("door", sensor.door)
+                .order("time.desc")
+                .limit(1)
+                .execute()
+                .await?
+                .text()
+                .await?;
+
+            let mut latest_entry: Vec<CountEntry> = match serde_json::from_str(&result) {
+                Ok(res) => res,
+                Err(err) => {
+                    bail!(format!(
+                        "Error in decoding message: {}, caused by: {}",
+                        err, result
+                    ))
+                }
+            };
+
+            latest_count_entries.append(&mut latest_entry);
+        }
+
+        Ok(latest_count_entries)
+    }
+
     pub async fn delete_sensor_entry(&self, door: String) -> Result<Response> {
         let client = &self.client;
 
@@ -183,7 +217,7 @@ pub struct Credentials {
 
 #[cfg(test)]
 mod tests {
-    use chrono::Utc;
+    use chrono::{Duration, Utc};
     use dotenv::dotenv;
     use std::env;
 
@@ -201,6 +235,77 @@ mod tests {
             sensor_table: "sensor_test".to_string(),
             sensor_name: "test;test_sensor".to_string(),
         }
+    }
+
+    #[tokio::test]
+    async fn database_lastest_entries_test() {
+        let credentials = get_test_credentials();
+        let database = get_database(credentials);
+
+        let sensor1 = HeartbeatEntry {
+            door: "test;sensor1".to_string(),
+            location: "test".to_string(),
+            error: None,
+            heartbeat: Some(Utc::now().timestamp_millis()),
+        };
+
+        let sensor2 = HeartbeatEntry {
+            door: "test;sensor2".to_string(),
+            location: "test".to_string(),
+            error: None,
+            heartbeat: Some(Utc::now().timestamp_millis()),
+        };
+
+        let count_entry_1 = CountEntry {
+            door: "test;sensor2".to_string(),
+            location: "test".to_string(),
+            time: Utc::now().timestamp_millis(),
+            nightowl: false,
+            direction_in: 1,
+            direction_out: 0,
+        };
+
+        let days_ago = Utc::now() - Duration::days(1);
+
+        let count_entry_2_1 = CountEntry {
+            door: "test;sensor2".to_string(),
+            location: "test".to_string(),
+            time: days_ago.timestamp_millis(),
+            nightowl: false,
+            direction_in: 1,
+            direction_out: 0,
+        };
+
+        let count_entry_2_2 = CountEntry {
+            door: "test;sensor2".to_string(),
+            location: "test".to_string(),
+            time: Utc::now().timestamp_millis(),
+            nightowl: false,
+            direction_in: 1,
+            direction_out: 0,
+        };
+
+        database.upsert_heartbeat(sensor1).await.unwrap();
+        database.upsert_heartbeat(sensor2).await.unwrap();
+
+        database
+            .add_counter_entry(count_entry_1.clone())
+            .await
+            .unwrap();
+        database
+            .add_counter_entry(count_entry_2_1.clone())
+            .await
+            .unwrap();
+        database
+            .add_counter_entry(count_entry_2_2.clone())
+            .await
+            .unwrap();
+
+        let latest_entries = database.get_latest_count_entries().await.unwrap();
+
+        assert!(latest_entries.contains(&count_entry_1));
+        assert!(!latest_entries.contains(&count_entry_2_1));
+        assert!(latest_entries.contains(&count_entry_2_2));
     }
 
     #[tokio::test]
