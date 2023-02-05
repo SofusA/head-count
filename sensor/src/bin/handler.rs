@@ -18,7 +18,7 @@ async fn main() {
         secret,
         sensor_name: "Health check".into(),
         sensor_table: "sensor".into(),
-        count_table: "count".into(),
+        count_table: "counter".into(),
     };
 
     let shared_state = Arc::new(AppState {
