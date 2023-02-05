@@ -41,10 +41,10 @@ jobs:
         run: mv sensor/target/x86_64-unknown-linux-musl/release/handler .
 
       - name: Deploy | Move host file
-        run: mv sensor/host.json .
+        run: mv sensor/azure/host.json .
 
       - name: Deploy | Move function definiton
-        run: mv sensor/v1 .
+        run: mv sensor/azure/v1 .
 
       - name: Deploy | Compress deploy package
         run: zip -r deploy.zip handler v* host.json
