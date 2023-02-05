@@ -1,0 +1,76 @@
+name: Test and deploy health check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - sensor/**
+
+  workflow_dispatch:
+
+permissions:
+    id-token: write
+    contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup | Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup | Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          target: x86_64-unknown-linux-musl
+
+      - name: Setup | musl tools
+        run: sudo apt install -y musl-tools
+
+      - name: Build | Tests
+        working-directory: ./sensor
+        env:
+          DATABASE_SECRET: ${{ secrets.DATABASE_SECRET}}
+          DATABASE_URL: ${{ secrets.DATABASE_URL}}
+        run: cargo test --target x86_64-unknown-linux-musl 
+
+  release:
+    needs: test
+    name: Deploy Azure Function
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup | Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup | Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          target: x86_64-unknown-linux-musl
+
+      - name: Setup | musl tools
+        run: sudo apt install -y musl-tools
+
+      - name: Build | Build
+        working-directory: ./sensor
+        run: cargo build --release --target x86_64-unknown-linux-musl
+
+      - name: Deploy | Move binary
+        working-directory: ./sensor/azure
+        run: mv ../target/x86_64-unknown-linux-musl/release/handler .
+      - name: Deploy | Compress deploy package
+        run: zip -r deploy.zip handler v* host.json
+
+      - name: Deploy | Authenticate
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy | Azure Function
+        run: az functionapp deployment source config-zip -g ${{ secrets.AZURE_RESOURCE_GROUP }} -n ${{ secrets.AZURE_APP_NAME }} --src deploy.zip
