@@ -38,8 +38,14 @@ jobs:
         run: cargo test --release --target x86_64-unknown-linux-musl      
 
       - name: Deploy | Move binary
-        working-directory: sensor/azure
-        run: mv ../target/x86_64-unknown-linux-musl/release/handler .
+        run: mv sensor/target/x86_64-unknown-linux-musl/release/handler .
+
+      - name: Deploy | Move host file
+        run: mv sensor/host.json .
+
+      - name: Deploy | Move function definiton
+        run: mv sensor/v1 .
+
       - name: Deploy | Compress deploy package
         run: zip -r deploy.zip handler v* host.json
 
