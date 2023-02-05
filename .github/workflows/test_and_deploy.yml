@@ -40,7 +40,7 @@ jobs:
             DATABASE_URL: ${{ secrets.DATABASE_URL}}
         with:
             command: build
-            args: manifest-path sensor/Cargo.toml --release --target=${{ matrix.target }}
+            args: --manifest-path sensor/Cargo.toml --release --target=${{ matrix.target }}
 
   release:
     needs: test
