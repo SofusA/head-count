@@ -27,6 +27,9 @@ jobs:
           target: x86_64-unknown-linux-musl
           override: true
 
+      - name: Setup | install dependencies
+        run: sudo apt install -y musl-tools pkg-config libssl-dev clang
+      
       - name: Setup | Test
         uses: actions-rs/cargo@v1
         env:
@@ -51,6 +54,9 @@ jobs:
           toolchain: stable
           target: x86_64-unknown-linux-musl
           override: true
+
+      - name: Setup | install dependencies
+        run: sudo apt install -y musl-tools pkg-config libssl-dev clang
 
       - name: Setup | Build
         uses: actions-rs/cargo@v1
