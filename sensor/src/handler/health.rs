@@ -25,11 +25,13 @@ fn check_sensor_and_latest_count_status(
     count_entries: Vec<CountEntry>,
     sensor_entries: Vec<HeartbeatEntry>,
 ) -> Result<String> {
+    let mut errors: Vec<String> = Vec::new();
+
     for sensor_entry in sensor_entries {
         let sensor = sensor_entry.clone().to_heartbeat();
 
         if !sensor.newer_than_days(1) {
-            bail!("Old heartbeat from {}", sensor_entry.door);
+            errors.push(format!("Old heartbeat from {}", sensor_entry.door));
         }
 
         let latest_count = count_entries.iter().find(|&x| x.door == sensor_entry.door);
@@ -39,19 +41,21 @@ fn check_sensor_and_latest_count_status(
                 let count = lc.to_count();
 
                 if !count.newer_than_days(4) {
-                    bail!("Latest entry from {} is old", lc.door);
+                    errors.push(format!("Latest entry from {} is old", lc.door));
                 }
 
                 if let Some(error) = sensor.error {
                     if error > count.timestamp {
-                        bail!("Error from {} is newer than latest count", lc.door);
+                        errors.push(format!("Error from {} is newer than latest count", lc.door));
                     }
                 }
             }
-            None => {
-                bail!("No count for {}", sensor_entry.door)
-            }
+            None => errors.push(format!("No count for {}", sensor_entry.door)),
         }
+    }
+
+    if !errors.is_empty() {
+        bail!(serde_json::to_string(&errors)?);
     }
 
     Ok("Good".into())
