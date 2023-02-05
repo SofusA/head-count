@@ -30,12 +30,18 @@ jobs:
       - name: Setup | install dependencies
         run: sudo apt install -y musl-tools pkg-config libssl-dev clang
 
-      - name: Build | Tests
+      - name: Setup | Test
+        uses: actions-rs/cargo@v1
         working-directory: ./sensor
         env:
-          DATABASE_SECRET: ${{ secrets.DATABASE_SECRET}}
-          DATABASE_URL: ${{ secrets.DATABASE_URL}}
-        run: cargo test --target x86_64-unknown-linux-musl 
+            TARGET_CC: clang
+            OPENSSL_LIB_DIR: /usr/lib/i386-linux-gnu/
+            OPENSSL_INCLUDE_DIR: /usr/include/openssl/
+            DATABASE_SECRET: ${{ secrets.DATABASE_SECRET}}
+            DATABASE_URL: ${{ secrets.DATABASE_URL}}
+        with:
+            command: build
+            args: --release --target=${{ matrix.target }}
 
   release:
     needs: test
