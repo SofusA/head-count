@@ -21,15 +21,14 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup | Rust toolchain
-        working-directory: ./sensor
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           profile: minimal
           target: x86_64-unknown-linux-musl
 
-      - name: Setup | musl tools
-        run: sudo apt install -y musl-tools
+      - name: Setup | install dependencies
+        run: sudo apt install -y musl-tools pkg-config libssl-dev clang
 
       - name: Build | Tests
         working-directory: ./sensor
