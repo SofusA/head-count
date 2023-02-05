@@ -38,7 +38,7 @@ jobs:
         run: cargo test --release --target x86_64-unknown-linux-musl      
 
       - name: Deploy | Move binary
-        working-directory: ./sensor/azure
+        working-directory: sensor/azure
         run: mv ../target/x86_64-unknown-linux-musl/release/handler .
       - name: Deploy | Compress deploy package
         run: zip -r deploy.zip handler v* host.json
@@ -51,5 +51,5 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy | Azure Function
-        working-directory: ./sensor
+        working-directory: sensor
         run: az functionapp deployment source config-zip -g ${{ secrets.AZURE_RESOURCE_GROUP }} -n ${{ secrets.AZURE_APP_NAME }} --src deploy.zip
