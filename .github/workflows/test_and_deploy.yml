@@ -22,6 +22,7 @@ jobs:
 
       - name: Setup | Rust toolchain
         uses: actions-rs/toolchain@v1
+        working-directory: ./sensor
         with:
           toolchain: stable
           profile: minimal
