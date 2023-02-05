@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use std::sync::Arc;
 
@@ -8,55 +8,53 @@ use crate::{
 };
 
 pub async fn health_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    (
-        StatusCode::OK,
-        health_status(&state.online_database).await.to_string(),
-    )
+    match get_health_status(&state.online_database).await {
+        Ok(res) => (StatusCode::OK, res),
+        Err(err) => (StatusCode::NOT_FOUND, err.to_string()),
+    }
 }
 
-async fn health_status(database: &Database) -> bool {
-    (get_health_status(database).await).unwrap_or(false)
-}
-
-async fn get_health_status(database: &Database) -> Result<bool> {
+async fn get_health_status(database: &Database) -> Result<String> {
     let sensor_entries = database.get_sensor_entries().await?;
     let latest_count_entries = database.get_latest_count_entries().await?;
 
-    Ok(check_sensor_and_latest_count_status(
-        latest_count_entries,
-        sensor_entries,
-    ))
+    check_sensor_and_latest_count_status(latest_count_entries, sensor_entries)
 }
 
 fn check_sensor_and_latest_count_status(
     count_entries: Vec<CountEntry>,
     sensor_entries: Vec<HeartbeatEntry>,
-) -> bool {
+) -> Result<String> {
     for sensor_entry in sensor_entries {
         let sensor = sensor_entry.clone().to_heartbeat();
 
         if !sensor.newer_than_days(1) {
-            return false;
+            bail!("Old heartbeat from {}", sensor_entry.door);
         }
 
         let latest_count = count_entries.iter().find(|&x| x.door == sensor_entry.door);
 
-        if let Some(lc) = latest_count {
-            let count = lc.to_count();
+        match latest_count {
+            Some(lc) => {
+                let count = lc.to_count();
 
-            if !count.newer_than_days(4) {
-                return false;
-            }
-
-            if let Some(error) = sensor.error {
-                if error > count.timestamp {
-                    return false;
+                if !count.newer_than_days(4) {
+                    bail!("Latest entry from {} is old", lc.door);
                 }
+
+                if let Some(error) = sensor.error {
+                    if error > count.timestamp {
+                        bail!("Error from {} is newer than latest count", lc.door);
+                    }
+                }
+            }
+            None => {
+                bail!("No count for {}", sensor_entry.door)
             }
         }
     }
 
-    true
+    Ok("Good".into())
 }
 
 pub async fn smoke_handler(Json(input): Json<Request>) -> impl IntoResponse {
@@ -135,30 +133,32 @@ mod tests {
         assert!(check_sensor_and_latest_count_status(
             vec![count_1.clone()],
             vec![good_sensor_1.clone()]
-        ));
+        )
+        .is_ok());
 
         // two sensors with two counts
         assert!(check_sensor_and_latest_count_status(
             vec![count_1.clone(), count_2],
             vec![good_sensor_1.clone(), sensor_2.clone()]
-        ));
+        )
+        .is_ok());
 
         // one sensor with bad heartbeat
-        assert!(!check_sensor_and_latest_count_status(
-            vec![count_1.clone()],
-            vec![bad_sensor_1]
-        ));
+        assert!(
+            check_sensor_and_latest_count_status(vec![count_1.clone()], vec![bad_sensor_1])
+                .is_err()
+        );
 
         // one sensor with error
-        assert!(!check_sensor_and_latest_count_status(
-            vec![count_1.clone()],
-            vec![error_sensor_1]
-        ));
+        assert!(
+            check_sensor_and_latest_count_status(vec![count_1.clone()], vec![error_sensor_1])
+                .is_err()
+        );
 
         // two sensors one without count
-        assert!(!check_sensor_and_latest_count_status(
-            vec![count_1],
-            vec![good_sensor_1, sensor_2]
-        ));
+        assert!(
+            check_sensor_and_latest_count_status(vec![count_1], vec![good_sensor_1, sensor_2])
+                .is_err()
+        );
     }
 }
