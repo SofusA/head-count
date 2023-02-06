@@ -17,7 +17,6 @@ jobs:
         with:
           toolchain: stable
           profile: minimal
-          target: x86_64-unknown-linux-musl
 
       - name: Build | Tests
         working-directory: ./sensor
@@ -26,20 +25,10 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL}}
         run: cargo test  
 
-  Build:
-    name: Compile ${{ matrix.target }}
-    runs-on: ubuntu-latest
-    needs: test
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [x86_64-pc-windows-gnu, x86_64-unknown-linux-musl]
-    steps:
-      - uses: actions/checkout@master
-      - name: Compile and release
+      - name: Compile and publish
         uses: rust-build/rust-build.action@v1.4.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          RUSTTARGET: ${{ matrix.target }}
+          RUSTTARGET: x86_64-pc-windows-gnu 
           SRC_DIR: ./sensor  
