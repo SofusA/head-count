@@ -58,7 +58,7 @@ fn check_sensor_and_latest_count_status(
         bail!(serde_json::to_string(&errors)?);
     }
 
-    Ok("Good".into())
+    Ok("[\"Good\"]".into())
 }
 
 pub async fn smoke_handler(Json(input): Json<Request>) -> impl IntoResponse {
