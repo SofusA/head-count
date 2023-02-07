@@ -30,7 +30,7 @@ fn check_sensor_and_latest_count_status(
     for sensor_entry in sensor_entries {
         let sensor = sensor_entry.clone().to_heartbeat();
 
-        if !sensor.newer_than_days(1) {
+        if !sensor.newer_than_hours(2) {
             errors.push(format!("Old heartbeat from {}", sensor_entry.door));
         }
 

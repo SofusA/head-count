@@ -55,10 +55,10 @@ impl Heartbeat {
         Ok(serialised)
     }
 
-    pub fn newer_than_days(&self, days: i64) -> bool {
+    pub fn newer_than_hours(&self, hours: i64) -> bool {
         let now = Utc::now().timestamp_millis();
         match self.heartbeat {
-            Some(heartbeat) => heartbeat > now - days * 86400000,
+            Some(heartbeat) => heartbeat > now - hours * 3600000,
             None => false,
         }
     }
@@ -70,8 +70,8 @@ mod tests {
     use chrono::Duration;
 
     #[test]
-    fn is_newer_than_days_test() {
-        let time = Utc::now() - Duration::days(3);
+    fn is_newer_than_hours_test() {
+        let time = Utc::now() - Duration::hours(3);
 
         let heartbeat = Heartbeat {
             error: None,
@@ -83,8 +83,8 @@ mod tests {
             heartbeat: Some(time.timestamp_millis()),
         };
 
-        assert!(!heartbeat.newer_than_days(1));
-        assert!(heartbeat.newer_than_days(4));
-        assert!(!heartbeat_with_none.newer_than_days(0))
+        assert!(!heartbeat.newer_than_hours(1));
+        assert!(heartbeat.newer_than_hours(4));
+        assert!(!heartbeat_with_none.newer_than_hours(0))
     }
 }
