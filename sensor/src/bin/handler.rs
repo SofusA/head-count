@@ -66,7 +66,7 @@ async fn main() {
     let app = Router::new()
         .route("/api/health", get(health_handler))
         .route("/api/client/:location", get(dashboard_handler))
-        .route("/api/client/static/:file", get(static_handler))
+        .route("/api/static/:file", get(static_handler))
         .with_state(shared_state);
 
     let port_key = "FUNCTIONS_CUSTOMHANDLER_PORT";
