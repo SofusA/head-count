@@ -47,13 +47,13 @@ jobs:
         run: mv sensor/azure/function/* deploy/
 
       - name: Deploy | List everything in deploy directory
-        run: ls -a 
+        run: ls -a deploy/
 
       - name: Deploy | Compress deploy package
         run: zip -r deploy.zip deploy/*
 
       - name: Deploy | List everything in deploy zip
-        run: zipcat deploy.zip 
+        run: zcat deploy.zip 
 
       - name: Deploy | Authenticate
         uses: azure/login@v1
