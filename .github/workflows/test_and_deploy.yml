@@ -46,8 +46,14 @@ jobs:
       - name: Deploy | Move function definiton
         run: mv sensor/azure/function/* deploy/
 
+      - name: Deploy | List everything in deploy directory
+        run: ls -a 
+
       - name: Deploy | Compress deploy package
         run: zip -r deploy.zip deploy/*
+
+      - name: Deploy | List everything in deploy zip
+        run: zipcat deploy.zip 
 
       - name: Deploy | Authenticate
         uses: azure/login@v1
