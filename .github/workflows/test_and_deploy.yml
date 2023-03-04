@@ -46,14 +46,9 @@ jobs:
       - name: Deploy | Move function definiton
         run: mv sensor/azure/function/* deploy/
 
-      - name: Deploy | List everything in deploy directory
-        run: ls -a deploy/
-
       - name: Deploy | Compress deploy package
-        run: zip -r deploy.zip deploy/*
-
-      - name: Deploy | List everything in deploy zip
-        run: unzip -l deploy.zip 
+        working-directory: ./deploy
+        run: zip -r deploy.zip .
 
       - name: Deploy | Authenticate
         uses: azure/login@v1
@@ -63,4 +58,4 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy | Azure Function
-        run: az functionapp deployment source config-zip -g ${{ secrets.AZURE_RESOURCE_GROUP }} -n ${{ secrets.AZURE_FUNCTION_NAME }} --src deploy.zip
+        run: az functionapp deployment source config-zip -g ${{ secrets.AZURE_RESOURCE_GROUP }} -n ${{ secrets.AZURE_FUNCTION_NAME }} --src deploy/deploy.zip
