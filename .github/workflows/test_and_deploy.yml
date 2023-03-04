@@ -53,7 +53,7 @@ jobs:
         run: zip -r deploy.zip deploy/*
 
       - name: Deploy | List everything in deploy zip
-        run: zcat deploy.zip 
+        run: unzip -l deploy.zip 
 
       - name: Deploy | Authenticate
         uses: azure/login@v1
