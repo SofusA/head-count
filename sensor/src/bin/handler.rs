@@ -1,11 +1,49 @@
-use axum::{routing::get, Router};
+use anyhow::Result;
+use axum::extract::Path;
+use axum::http::{self, Response};
+use axum::response::{Html, IntoResponse};
+use axum::routing::get;
+use axum::Router;
 use dotenv::dotenv;
 use sensor::app::AppState;
 use sensor::handler::health::health_handler;
 use sensor::models::database::{get_database, Credentials};
-use std::env;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use std::{env, fs};
+
+async fn dashboard_handler() -> impl IntoResponse {
+    let file_content = fs::read_to_string("dist/static/dashboard.html").unwrap();
+    Html(file_content)
+}
+
+fn create_file_response(path: &str) -> Result<Response<String>> {
+    let content = fs::read_to_string("dist/static/".to_string() + path)?;
+    let file_ending = path.split('.').last().unwrap_or("unknown");
+
+    let mimetype = match file_ending {
+        "css" => "text/css",
+        "js" => "text/javascript",
+        _ => "text/plain",
+    };
+
+    let response = Response::builder()
+        .status(http::StatusCode::OK)
+        .header("Content-Type", mimetype)
+        .body(content)?;
+
+    Ok(response)
+}
+
+async fn static_handler(Path(path): Path<String>) -> impl IntoResponse {
+    match create_file_response(&path) {
+        Ok(res) => res,
+        Err(err) => Response::builder()
+            .status(http::StatusCode::BAD_REQUEST)
+            .body(err.to_string())
+            .expect("Error creating error message"),
+    }
+}
 
 #[tokio::main]
 async fn main() {
@@ -26,7 +64,9 @@ async fn main() {
     });
 
     let app = Router::new()
-        .route("/api/v1", get(health_handler))
+        .route("/api/health", get(health_handler))
+        .route("/api/client/:location", get(dashboard_handler))
+        .route("/api/client/static/:file", get(static_handler))
         .with_state(shared_state);
 
     let port_key = "FUNCTIONS_CUSTOMHANDLER_PORT";
@@ -36,6 +76,8 @@ async fn main() {
     };
 
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
+
+    println!("listening on {}", addr);
 
     axum::Server::bind(&addr)
         .serve(app.into_make_service())

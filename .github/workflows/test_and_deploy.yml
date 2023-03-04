@@ -37,17 +37,17 @@ jobs:
             DATABASE_URL: ${{ secrets.DATABASE_URL}}
         run: cargo test --release --target x86_64-unknown-linux-musl      
 
-      - name: Deploy | Move binary
-        run: mv sensor/target/x86_64-unknown-linux-musl/release/handler .
+      - name: Deploy | Make directory for zip
+        run: mkdir deploy
 
-      - name: Deploy | Move host file
-        run: mv sensor/azure/host.json .
+      - name: Deploy | Move binary
+        run: mv sensor/target/x86_64-unknown-linux-musl/release/handler deploy/
 
       - name: Deploy | Move function definiton
-        run: mv sensor/azure/v1 .
+        run: mv sensor/azure/function/* deploy/
 
       - name: Deploy | Compress deploy package
-        run: zip -r deploy.zip handler v* host.json
+        run: zip -r deploy.zip deploy/*
 
       - name: Deploy | Authenticate
         uses: azure/login@v1
