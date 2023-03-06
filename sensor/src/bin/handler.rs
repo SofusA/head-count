@@ -1,48 +1,61 @@
-use anyhow::Result;
-use axum::extract::Path;
-use axum::http::{self, Response};
-use axum::response::{Html, IntoResponse};
-use axum::routing::get;
-use axum::Router;
+use axum::{
+    body::{boxed, Full},
+    http::{header, StatusCode, Uri},
+    response::{IntoResponse, Response},
+    routing::{get, Router},
+};
 use dotenv::dotenv;
+use rust_embed::RustEmbed;
 use sensor::app::AppState;
 use sensor::handler::health::health_handler;
 use sensor::models::database::{get_database, Credentials};
+use std::env;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use std::{env, fs};
+
+#[derive(RustEmbed)]
+#[folder = "dist/static/"]
+struct Asset;
+pub struct StaticFile<T>(pub T);
+
+impl<T> IntoResponse for StaticFile<T>
+where
+    T: Into<String>,
+{
+    fn into_response(self) -> Response {
+        let path = self.0.into();
+
+        match Asset::get(path.as_str()) {
+            Some(content) => {
+                let body = boxed(Full::from(content.data));
+                let mime = mime_guess::from_path(path).first_or_octet_stream();
+                Response::builder()
+                    .header(header::CONTENT_TYPE, mime.as_ref())
+                    .body(body)
+                    .unwrap()
+            }
+            None => Response::builder()
+                .status(StatusCode::NOT_FOUND)
+                .body(boxed(Full::from("404")))
+                .unwrap(),
+        }
+    }
+}
+
+async fn static_handler(uri: Uri) -> impl IntoResponse {
+    let mut path = uri.path().trim_start_matches('/').to_string();
+
+    if path.starts_with("api/client/static/") {
+        path = path.replace("api/client/static/", "");
+    }
+
+    StaticFile(path)
+}
 
 async fn dashboard_handler() -> impl IntoResponse {
-    let file_content = fs::read_to_string("dist/static/dashboard.html").unwrap();
-    Html(file_content)
-}
-
-fn create_file_response(path: &str) -> Result<Response<String>> {
-    let content = fs::read_to_string("dist/static/".to_string() + path)?;
-    let file_ending = path.split('.').last().unwrap_or("unknown");
-
-    let mimetype = match file_ending {
-        "css" => "text/css",
-        "js" => "text/javascript",
-        _ => "text/plain",
-    };
-
-    let response = Response::builder()
-        .status(http::StatusCode::OK)
-        .header("Content-Type", mimetype)
-        .body(content)?;
-
-    Ok(response)
-}
-
-async fn static_handler(Path(path): Path<String>) -> impl IntoResponse {
-    match create_file_response(&path) {
-        Ok(res) => res,
-        Err(err) => Response::builder()
-            .status(http::StatusCode::BAD_REQUEST)
-            .body(err.to_string())
-            .expect("Error creating error message"),
-    }
+    static_handler("/dashboard.html".parse::<Uri>().unwrap()).await
+    // let file_content = fs::read_to_string("dist/static/dashboard.html").unwrap();
+    // Html(file_content)
 }
 
 #[tokio::main]
@@ -66,7 +79,7 @@ async fn main() {
     let app = Router::new()
         .route("/api/health", get(health_handler))
         .route("/api/client/:location", get(dashboard_handler))
-        .route("/api/static/:file", get(static_handler))
+        .route("/api/client/static/*file", get(static_handler))
         .with_state(shared_state);
 
     let port_key = "FUNCTIONS_CUSTOMHANDLER_PORT";

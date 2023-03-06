@@ -20,6 +20,19 @@ jobs:
       - name: Setup | Checkout code
         uses: actions/checkout@v3
 
+      - name: Setup | Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      
+      - name: Setup | Npm install
+        run: npm ci
+        working-directory: ./sensor/views
+
+      - name: Build | Build front-end
+        run: npm run build
+        working-directory: ./sensor/views
+
       - name: Setup | Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
