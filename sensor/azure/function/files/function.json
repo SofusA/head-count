@@ -6,7 +6,7 @@
             "name": "req",
             "direction": "in",
             "methods": [ "get" ],
-            "route": "location/files/{path:alpha}"
+            "route": "location/files/{**path}"
         },
         {
             "type": "http",
