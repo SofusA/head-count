@@ -6,7 +6,7 @@
           "name": "req",
           "direction": "in",
           "methods": [ "get" ],
-          "route": "{location:alpha}"
+          "route": "client/{location:alpha}"
       },
       {
           "type": "http",
