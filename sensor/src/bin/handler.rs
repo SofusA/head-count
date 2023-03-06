@@ -45,8 +45,8 @@ where
 async fn static_handler(uri: Uri) -> impl IntoResponse {
     let mut path = uri.path().trim_start_matches('/').to_string();
 
-    if path.starts_with("api/client/static/") {
-        path = path.replace("api/client/static/", "");
+    if path.starts_with("api/static/") {
+        path = path.replace("api/static/", "");
     }
 
     StaticFile(path)
@@ -54,8 +54,6 @@ async fn static_handler(uri: Uri) -> impl IntoResponse {
 
 async fn dashboard_handler() -> impl IntoResponse {
     static_handler("/dashboard.html".parse::<Uri>().unwrap()).await
-    // let file_content = fs::read_to_string("dist/static/dashboard.html").unwrap();
-    // Html(file_content)
 }
 
 #[tokio::main]
@@ -78,8 +76,8 @@ async fn main() {
 
     let app = Router::new()
         .route("/api/health", get(health_handler))
-        .route("/api/client/:location", get(dashboard_handler))
-        .route("/api/client/static/*file", get(static_handler))
+        .route("/api/:location", get(dashboard_handler))
+        .route("/api/static/*file", get(static_handler))
         .with_state(shared_state);
 
     let port_key = "FUNCTIONS_CUSTOMHANDLER_PORT";
