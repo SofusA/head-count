@@ -9,6 +9,14 @@
           "route": "client/{location:alpha}"
       },
       {
+          "authLevel": "anonymous",
+          "type": "httpTrigger",
+          "name": "req",
+          "direction": "in",
+          "methods": [ "get" ],
+          "route": "client/static/{location:alpha}"
+      },
+      {
           "type": "http",
           "name": "res",
           "direction": "out"
