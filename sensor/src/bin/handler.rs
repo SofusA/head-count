@@ -1,3 +1,4 @@
+use axum::ServiceExt;
 use axum::{
     body::{boxed, Full},
     http::{header, StatusCode, Uri},
@@ -12,6 +13,8 @@ use sensor::models::database::{get_database, Credentials};
 use std::env;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use tower::layer::Layer;
+use tower_http::normalize_path::NormalizePathLayer;
 
 #[derive(RustEmbed)]
 #[folder = "dist/static/"]
@@ -74,11 +77,13 @@ async fn main() {
         online_database: get_database(credentials),
     });
 
-    let app = Router::new()
-        .route("/:location", get(dashboard_handler))
-        .route("/static/*file", get(static_handler))
-        .route("/api/health", get(health_handler))
-        .with_state(shared_state);
+    let app = NormalizePathLayer::trim_trailing_slash().layer(
+        Router::new()
+            .route("/:location", get(dashboard_handler))
+            .route("/static/*file", get(static_handler))
+            .route("/api/health", get(health_handler))
+            .with_state(shared_state),
+    );
 
     let port_key = "FUNCTIONS_CUSTOMHANDLER_PORT";
     let port: u16 = match env::var(port_key) {

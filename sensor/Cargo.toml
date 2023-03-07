@@ -17,6 +17,8 @@ reqwest = { version = "0.11", features = ["json"] }
 anyhow = "1.0.68"
 rust-embed = { version = "6.4.2", features = ["axum", "tokio", "mime_guess"] }
 mime_guess = "2.0.4"
+tower-http = { version = "0.4.0", features = ["normalize-path"] }
+tower = "0.4.13"
 
 [target.x86_64-unknown-linux-musl.dependencies.openssl-sys]
 version = "0.9"
