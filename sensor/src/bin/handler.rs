@@ -45,8 +45,8 @@ where
 async fn static_handler(uri: Uri) -> impl IntoResponse {
     let mut path = uri.path().trim_start_matches('/').to_string();
 
-    if path.starts_with("api/client/static/") {
-        path = path.replace("api/client/static/", "");
+    if path.starts_with("static/") {
+        path = path.replace("static/", "");
     }
 
     StaticFile(path)
@@ -75,9 +75,9 @@ async fn main() {
     });
 
     let app = Router::new()
+        .route("/:location", get(dashboard_handler))
+        .route("/static/*file", get(static_handler))
         .route("/api/health", get(health_handler))
-        .route("/api/client/:location", get(dashboard_handler))
-        .route("/api/client/static/*file", get(static_handler))
         .with_state(shared_state);
 
     let port_key = "FUNCTIONS_CUSTOMHANDLER_PORT";
