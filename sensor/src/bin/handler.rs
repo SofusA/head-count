@@ -8,7 +8,7 @@ use axum::{
 use dotenv::dotenv;
 use rust_embed::RustEmbed;
 use sensor::app::AppState;
-use sensor::handler::health::health_handler;
+use sensor::handler::health::{health_handler, smoke_handler};
 use sensor::models::database::{get_database, Credentials};
 use std::env;
 use std::net::SocketAddr;
@@ -62,8 +62,8 @@ async fn dashboard_handler() -> impl IntoResponse {
 #[tokio::main]
 async fn main() {
     dotenv().ok();
-    let url = env::var("DATABASE_URL").unwrap();
-    let secret = env::var("DATABASE_SECRET").unwrap();
+    let url = env::var("DATABASE_URL").expect("Database url not found");
+    let secret = env::var("DATABASE_SECRET").expect("Database secret not found");
 
     let credentials = Credentials {
         url,
@@ -82,16 +82,11 @@ async fn main() {
             .route("/:location", get(dashboard_handler))
             .route("/static/*file", get(static_handler))
             .route("/api/health", get(health_handler))
+            .route("/api/smoke", get(smoke_handler))
             .with_state(shared_state),
     );
 
-    let port_key = "FUNCTIONS_CUSTOMHANDLER_PORT";
-    let port: u16 = match env::var(port_key) {
-        Ok(val) => val.parse().expect("Custom Handler port is not a number!"),
-        Err(_) => 3000,
-    };
-
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 5000));
 
     println!("listening on {}", addr);
 

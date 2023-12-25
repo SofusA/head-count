@@ -8,10 +8,6 @@ on:
 
   workflow_dispatch:
 
-permissions:
-    id-token: write
-    contents: read
-
 jobs:
   test:
     name: Test and deploy health check
@@ -37,38 +33,17 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          target: x86_64-unknown-linux-musl
-          override: true
-
-      - name: Build | Install dependencies
-        run: sudo apt install -y musl-tools 
 
       - name: Build | Test
         working-directory: ./sensor
         env:
             DATABASE_SECRET: ${{ secrets.DATABASE_SECRET}}
             DATABASE_URL: ${{ secrets.DATABASE_URL}}
-        run: cargo test --release --target x86_64-unknown-linux-musl      
+        run: cargo test --release       
 
-      - name: Deploy | Make directory for zip
-        run: mkdir deploy
-
-      - name: Deploy | Move binary
-        run: mv sensor/target/x86_64-unknown-linux-musl/release/handler deploy/
-
-      - name: Deploy | Move function definiton
-        run: mv sensor/azure/function/* deploy/
-
-      - name: Deploy | Compress deploy package
-        working-directory: ./deploy
-        run: zip -r deploy.zip .
-
-      - name: Deploy | Authenticate
-        uses: azure/login@v1
+      - name: Build and publish "latest" Docker image
+        uses: VaultVulp/gp-docker-action@1.6.0
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Deploy | Azure Function
-        run: az functionapp deployment source config-zip -g ${{ secrets.AZURE_RESOURCE_GROUP }} -n ${{ secrets.AZURE_FUNCTION_NAME }} --src deploy/deploy.zip
+          github-token: ${{ secrets.GITHUB_TOKEN }} 
+          image-name: ${{ github.event.repository.name }} 
+          dockerfile: Containerfile

@@ -1,10 +1,10 @@
 use anyhow::{bail, Result};
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
+use axum::{extract::State, http::StatusCode, response::IntoResponse};
 use std::sync::Arc;
 
 use crate::{
     app::AppState,
-    models::{count::CountEntry, database::Database, heartbeat::HeartbeatEntry, request::Request},
+    models::{count::CountEntry, database::Database, heartbeat::HeartbeatEntry},
 };
 
 pub async fn health_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
@@ -61,17 +61,8 @@ fn check_sensor_and_latest_count_status(
     Ok("[\"Good\"]".into())
 }
 
-pub async fn smoke_handler(Json(input): Json<Request>) -> impl IntoResponse {
-    match to_serialised_entry(input) {
-        Ok(res) => res,
-        Err(err) => err.to_string(),
-    }
-}
-
-fn to_serialised_entry(request: Request) -> Result<String> {
-    let entry = request.to_count()?;
-    let serialised = entry.to_string()?;
-    Ok(serialised)
+pub async fn smoke_handler() -> impl IntoResponse {
+    (StatusCode::OK, "Ok")
 }
 
 #[cfg(test)]

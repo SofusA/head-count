@@ -6,7 +6,7 @@ mod tests {
         app::{app, heartbeat::start_heartbeat_and_retry},
         handler::count::handle_add_count,
         models::{
-            count::{Count, CountEntry},
+            count::CountEntry,
             database::{get_database, Credentials},
             request::Request,
         },
@@ -42,25 +42,18 @@ mod tests {
         let addr = spawn_service_and_get_address(credentials);
         let endpoint = get_endpoint(addr, "smoke");
 
-        let time = "2050-01-01T18:10:00+01:00".to_string();
-        let request = get_test_request(time);
-        let serialised_request = serde_json::to_string(&request).unwrap();
-
         let client = reqwest::Client::new();
-        let response_count: Count = client
+        let response: String = client
             .post(endpoint)
             .header("Content-Type", "application/json")
-            .body(serialised_request.clone())
             .send()
             .await
             .unwrap()
-            .json()
+            .text()
             .await
             .unwrap();
 
-        let expected_count = request.to_count().unwrap();
-
-        assert_eq!(expected_count, response_count);
+        assert_eq!(response, "Ok");
     }
 
     #[tokio::test]
