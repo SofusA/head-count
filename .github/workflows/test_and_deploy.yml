@@ -23,11 +23,11 @@ jobs:
       
       - name: Setup | Npm install
         run: npm ci
-        working-directory: ./sensor/views
+        working-directory: ./views
 
       - name: Build | Build front-end
         run: npm run build
-        working-directory: ./sensor/views
+        working-directory: ./views
 
       - name: Setup | Rust toolchain
         uses: actions-rs/toolchain@v1
@@ -35,7 +35,6 @@ jobs:
           toolchain: stable
 
       - name: Build | Test
-        working-directory: ./sensor
         env:
             DATABASE_SECRET: ${{ secrets.DATABASE_SECRET}}
             DATABASE_URL: ${{ secrets.DATABASE_URL}}

@@ -19,7 +19,6 @@ jobs:
           profile: minimal
 
       - name: Build | Tests
-        working-directory: ./sensor
         env:
           DATABASE_SECRET: ${{ secrets.DATABASE_SECRET}}
           DATABASE_URL: ${{ secrets.DATABASE_URL}}
@@ -31,4 +30,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           RUSTTARGET: x86_64-pc-windows-gnu 
-          SRC_DIR: ./sensor  
