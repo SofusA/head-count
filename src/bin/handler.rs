@@ -59,6 +59,10 @@ async fn dashboard_handler() -> impl IntoResponse {
     static_handler("/dashboard.html".parse::<Uri>().unwrap()).await
 }
 
+async fn export_handler() -> impl IntoResponse {
+    static_handler("/export.html".parse::<Uri>().unwrap()).await
+}
+
 #[tokio::main]
 async fn main() {
     dotenv().ok();
@@ -80,6 +84,7 @@ async fn main() {
     let app = NormalizePathLayer::trim_trailing_slash().layer(
         Router::new()
             .route("/:location", get(dashboard_handler))
+            .route("/:location/export", get(export_handler))
             .route("/static/*file", get(static_handler))
             .route("/api/health", get(health_handler))
             .route("/api/smoke", get(smoke_handler))

@@ -3,9 +3,6 @@ name: Test and deploy health check
 on:
   push:
     branches: [main]
-    paths:
-      - sensor/**
-
   workflow_dispatch:
 
 jobs:
