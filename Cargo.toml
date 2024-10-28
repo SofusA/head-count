@@ -1,0 +1,21 @@
+[package]
+name = "sensor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.6"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+async-trait = "0.1"
+postgrest = "1.6.0"
+chrono = "0.4.23"
+clap = { version = "4.1.1", features = ["derive"] }
+dotenv = "0.15.0"
+reqwest = { version = "0.11", features = ["json"] }
+anyhow = "1.0.68"
+rust-embed = { version = "6.4.2", features = ["axum", "tokio", "mime_guess"] }
+mime_guess = "2.0.4"
+tower-http = { version = "0.4.0", features = ["normalize-path"] }
+tower = "0.4.13"
