@@ -2,8 +2,7 @@ import { DateTime } from "luxon";
 import { Database } from "./modules/database";
 import ApexCharts from "apexcharts";
 
-// For github.com/head-count. Added +1
-const loc = window.location.pathname.split("/")[1 + 1];
+const loc = window.location.pathname.split("/")[1];
 
 // initiate database
 const supabase = new Database(loc);
