@@ -85,7 +85,7 @@ if (linkToStatus instanceof HTMLAnchorElement) {
 }
 const linkToDashboard = document.getElementById("linkToDashboard");
 if (linkToDashboard instanceof HTMLAnchorElement) {
-  linkToDashboard.href = `/${loc}/`;
+  linkToDashboard.href = `../${loc}/`;
 }
 const linkToExport = document.getElementById("linkToExport");
 if (linkToExport instanceof HTMLAnchorElement) {
