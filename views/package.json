@@ -11,6 +11,7 @@
     "copy": "cp -r src/views/* build/skylab && cp -r src/static build",
     "rename-dashboard": "mv build/skylab/dashboard.html build/skylab/index.html",
     "build": "npm run init-build && npm run build:status && npm run build:dashboard && npm run build:monitor && npm run build:export && npm run copy && npm run rename-dashboard",
+    "publish": "rm -rf ../docs && mv build ../docs",
     "serve": "serve build"
   },
   "dependencies": {
