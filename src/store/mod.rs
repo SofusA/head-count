@@ -23,10 +23,7 @@ pub fn store(entry: CountEntry) -> Result<CountEntry> {
 }
 
 pub fn read_store() -> Vec<Record> {
-    match try_read_store() {
-        Ok(res) => res,
-        Err(_) => vec![],
-    }
+    try_read_store().unwrap_or_default()
 }
 
 fn try_read_store() -> Result<Vec<Record>> {

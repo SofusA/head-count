@@ -113,8 +113,7 @@ mod tests {
         let store = read_store();
         let store_result = store
             .iter()
-            .filter(|x| x.entry.time == entry.timestamp)
-            .last()
+            .rfind(|x| x.entry.time == entry.timestamp)
             .unwrap();
         delete_record(store_result.path.clone());
 

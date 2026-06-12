@@ -1,20 +1,9 @@
 use anyhow::{bail, Result};
-use axum::{extract::State, http::StatusCode, response::IntoResponse};
-use std::sync::Arc;
+use axum::{http::StatusCode, response::IntoResponse};
 
-use crate::{
-    app::AppState,
-    models::{count::CountEntry, database::Database, heartbeat::HeartbeatEntry},
-};
+use crate::models::{count::CountEntry, database::Database, heartbeat::HeartbeatEntry};
 
-pub async fn health_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    match get_health_status(&state.online_database).await {
-        Ok(res) => (StatusCode::OK, res),
-        Err(err) => (StatusCode::NOT_FOUND, err.to_string()),
-    }
-}
-
-async fn get_health_status(database: &Database) -> Result<String> {
+pub async fn get_health_status(database: &Database) -> Result<String> {
     let sensor_entries = database.get_sensor_entries().await?;
     let latest_count_entries = database.get_latest_count_entries().await?;
 

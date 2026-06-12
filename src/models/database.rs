@@ -352,8 +352,7 @@ mod tests {
         let result = database.get_sensor_entries().await.unwrap();
         let result_entry = result
             .iter()
-            .filter(|x| x.door == entry.door)
-            .last()
+            .rfind(|x| x.door == entry.door)
             .unwrap()
             .to_owned();
 
@@ -396,8 +395,7 @@ mod tests {
         let result = database.get_sensor_entries().await.unwrap();
         let result_entry = result
             .iter()
-            .filter(|x| x.door == first_entry.door)
-            .last()
+            .rfind(|x| x.door == first_entry.door)
             .unwrap()
             .to_owned();
 
